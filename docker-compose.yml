@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  server-app:
+    container_name: server-app
+    environment:
+      - DOCKER_ENV=true
+    build:
+      context: ./server-app/build/app
+      dockerfile: Dockerfile
+    tty: true
+    ports:
+      - 8080:8080
+    env_file:
+      - ./server-app/build/app/.env
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - type: bind
+        source: ./server-app
+        target: /server-app
+    networks:
+      - golang_network
+
+  frontend-app:
+    container_name: frontend-app
+    environment:
+      - DOCKER_ENV=true
+      - NODE_ENV=development
+    build:
+      context: ./frontend-app/build/frontend
+      dockerfile: Dockerfile
+    tty: true
+    volumes:
+      - ./frontend-app:/frontend-app
+    working_dir: /frontend-app
+    command: >
+      bash -c "npm run dev"
+    ports:
+      - 3000:3000
+    networks:
+      - golang_network
+
+  db:
+    container_name: db
+    build: ./server-app/build/db/
+    volumes:
+      - ./server-app/build/db/init:/docker-entrypoint-initdb.d
+      - ./server-app/build/db/data:/var/lib/db
+    environment: 
+      - MYSQL_ROOT_PASSWORD=password
+    ports:
+      - "3306:3306"
+    networks:
+      - golang_network
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    ports:
+      - 6379:6379
+    networks:
+      - golang_network
+
+volumes:
+  go_volume:
+    name: go_volume
+
+networks:
+  golang_network:
+    external: true

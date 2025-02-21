@@ -1,34 +1,25 @@
 package redis
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"errors"
 	"io"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/joho/godotenv"
-
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
+	"github.com/joho/godotenv"
+	"github.com/kazukimurahashi12/webapp/interface/session"
 )
 
-// mockを更新する場合は以下を実行
-// go run github.com/vektra/mockery/v2@v2.36.0
-type SessionStore interface {
-	NewSession(c *gin.Context, cookieKey, redisValue string) error
-	GetSession(c *gin.Context, cookieKey string) (string, error)
-	DeleteSession(c *gin.Context, id string) error
-	UpdateSession(c *gin.Context, ChangeId string, oldId string) error
-}
+var _ session.SessionManager = &RedisSessionStore{}
 
 type RedisSessionStore struct {
 	conn *redis.Client
 }
-
-var _ SessionStore = &RedisSessionStore{}
 
 func NewRedisSessionStore() *RedisSessionStore {
 	//環境変数設定
@@ -54,73 +45,38 @@ func NewRedisSessionStore() *RedisSessionStore {
 	return &RedisSessionStore{conn: conn}
 }
 
-func (s *RedisSessionStore) NewSession(c *gin.Context, cookieKey, redisValue string) error {
+func (s *RedisSessionStore) CreateSession(userID string) error {
 	slice := make([]byte, 64)
-	//ランダムなバイト列を生成
 	if _, err := io.ReadFull(rand.Reader, slice); err != nil {
 		log.Println("ランダムな文字作成時にエラーが発生しました。", err.Error())
 		return err
 	}
 
-	//バイト配列を base64 エンコードして文字列に変換
-	newRedisKey := base64.URLEncoding.EncodeToString(slice)
-
-	//Redisにセッションを登録
-	if err := s.conn.Set(c, newRedisKey, redisValue, 0).Err(); err != nil {
+	redisKey := base64.URLEncoding.EncodeToString(slice)
+	if err := s.conn.Set(context.Background(), redisKey, userID, 0).Err(); err != nil {
 		log.Println("Session登録時にエラーが発生:", err.Error())
 		return err
 	}
-
-	// SameSite属性をNoneにするために、Secure属性（HTTPS）を設定
-	var secure bool = false
-	if c.Request.URL.Scheme == "https" {
-		secure = true
-	}
-	//HTTPレスポンスヘッダーにCookieを設定
-	cookie := &http.Cookie{
-		Name:     cookieKey,
-		Value:    newRedisKey,
-		Path:     "/",
-		Domain:   "localhost", // 本番環境では正しいドメインを設定
-		MaxAge:   0,
-		HttpOnly: false,
-		Secure:   secure, // 本番環境ではHTTPSでない場合はfalseにする
-		SameSite: http.SameSiteNoneMode,
-	}
-	// クッキーをレスポンスに設定
-	http.SetCookie(c.Writer, cookie)
-	log.Println("クッキーをレスポンスに設定に成功。", cookie)
 	return nil
 }
 
-func (s *RedisSessionStore) GetSession(c *gin.Context, cookieKey string) (string, error) {
-	//クライアントのリクエストに含まれるセッションのクッキー値を取得
+func (s *RedisSessionStore) GetSession(c *gin.Context) (string, error) {
+	cookieKey := os.Getenv("LOGIN_USER_ID_KEY")
 	redisKey, err := c.Cookie(cookieKey)
 	if err != nil {
 		log.Printf("セッションのクッキーが見つかりませんでした。redisKey: %s, cookieKey: %s, err: %v", redisKey, cookieKey, err)
 		return "", err
 	}
 
-	//取得したセッションのクッキー値を使用して、Redisから対応するセッションデータを取得
-	redisValue, err := s.conn.Get(c, redisKey).Result()
+	redisValue, err := s.conn.Get(context.Background(), redisKey).Result()
 	if err != nil {
 		log.Printf("Redisから対応するセッションデータを取得に失敗しました。redisKey: %s, redisValue: %s, err: %v", redisKey, redisValue, err)
 		return "", err
 	}
-	switch {
-	case err == redis.Nil:
-		log.Println("SessionKeyが登録されていません。", err.Error())
-		return "", err
-	case err != nil:
-		log.Println("Session取得時にエラー発生:", err.Error())
-		return "", err
-	}
-
-	log.Printf("redisからセッション情報のIDを取得に成功。 ID: %s", redisValue)
 	return redisValue, nil
 }
 
-func (s *RedisSessionStore) DeleteSession(c *gin.Context, id string) error {
+func (s *RedisSessionStore) DeleteSession(c *gin.Context) error {
 	cookieKey := os.Getenv("LOGIN_USER_ID_KEY")
 	redisKey, err := c.Cookie(cookieKey)
 	if err != nil {
@@ -128,30 +84,11 @@ func (s *RedisSessionStore) DeleteSession(c *gin.Context, id string) error {
 		return err
 	}
 
-	//取得したセッションのクッキー値を使用して、Redisから対応するセッションデータを取得
-	redisValue, err := s.conn.Get(c, redisKey).Result()
-	if err != nil {
-		log.Printf("Redisから対応するセッションデータを取得に失敗しました。redisKey: %s, redisValue: %s, err: %v", redisKey, redisValue, err)
+	if err := s.conn.Del(context.Background(), redisKey).Err(); err != nil {
+		log.Printf("Redisからセッションを削除できませんでした。redisKey: %s, err: %v", redisKey, err)
 		return err
 	}
 
-	//Redisからセッションを削除
-	if redisValue == id {
-		cmd := s.conn.Del(c, redisKey)
-		if cmd.Val() == 0 {
-			err := errors.New("error in redis of updateSession")
-			log.Printf("Redisからセッションを削除できませんでした。cmd.Val(): %v", cmd.Val())
-			return err
-		} else {
-			log.Println("Redisからセッションを削除しました。:", cmd.String())
-		}
-	} else {
-		err := errors.New("error in redis of updateSession")
-		log.Printf("セッションidが一致しませんでした。id: %s, redisValue: %s, err: %v", id, redisValue, err)
-		return err
-	}
-
-	//クライアントのブラウザに保存されているセッションのクッキーを削除
 	cookie := &http.Cookie{
 		Name:     cookieKey,
 		Value:    "",
@@ -162,79 +99,48 @@ func (s *RedisSessionStore) DeleteSession(c *gin.Context, id string) error {
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
 	}
-	// クッキーをレスポンスに設定
 	http.SetCookie(c.Writer, cookie)
-	log.Printf("クッキーを消去に成功。")
-	return err
+	return nil
 }
 
-func (s *RedisSessionStore) UpdateSession(c *gin.Context, ChangeId string, oldId string) error {
+func (s *RedisSessionStore) UpdateSession(c *gin.Context, newID, oldID string) error {
 	cookieKey := os.Getenv("LOGIN_USER_ID_KEY")
-	//リクエストからCookie取得
 	redisKey, err := c.Cookie(cookieKey)
 	if err != nil {
-		log.Println("セッションからIDが取得できませんでした。,err:" + err.Error())
+		log.Println("セッションのクッキーが見つかりませんでした。,err:" + err.Error())
 		return err
 	}
 
-	//取得したセッションのクッキー値を使用して、Redisから対応するセッションデータを取得
-	redisValue, err := s.conn.Get(c, redisKey).Result()
-	if err != nil {
-		log.Printf("Redisから対応するセッションデータを取得に失敗しました。redisKey: %s, redisValue: %s, err: %v", redisKey, redisValue, err)
+	// 古いセッションを削除
+	if err := s.conn.Del(context.Background(), redisKey).Err(); err != nil {
+		log.Printf("Redisからセッションを削除できませんでした。redisKey: %s, err: %v", redisKey, err)
 		return err
 	}
 
-	//Redisからセッションを消去
-	if redisValue == oldId {
-		cmd := s.conn.Del(c, redisKey)
-		if cmd.Val() == 0 {
-			err := errors.New("error in redis of updateSession")
-			log.Printf("Redisからセッションを削除できませんでした。cmd.Val(): %v", cmd.Val())
-			return err
-		} else {
-			log.Println("Redisからセッションを削除しました。:", cmd.String())
-		}
-	} else {
-		err := errors.New("error in redis of updateSession")
-		log.Printf("セッションidが一致しませんでした。oldId: %s, redisValue: %s, err: %v", oldId, redisValue, err)
-		return err
-	}
-
+	// 新しいセッションを作成
 	slice := make([]byte, 64)
-	//ランダムなバイト列を生成
 	if _, err := io.ReadFull(rand.Reader, slice); err != nil {
-		log.Println("ランダムな文字作成時にエラーが発生しました。：" + err.Error())
+		log.Println("ランダムな文字作成時にエラーが発生しました。", err.Error())
 		return err
 	}
 
-	//バイト配列を base64 エンコードして文字列に変換
 	newRedisKey := base64.URLEncoding.EncodeToString(slice)
-
-	//Redisにセッションを登録
-	if err := s.conn.Set(c, newRedisKey, ChangeId, 0).Err(); err != nil {
-		log.Println("Session登録時にエラーが発生:" + err.Error())
+	if err := s.conn.Set(context.Background(), newRedisKey, newID, 0).Err(); err != nil {
+		log.Println("Session登録時にエラーが発生:", err.Error())
 		return err
 	}
-	log.Printf("Redisでセッション登録に成功しました。cookieKey: %s, newRedisKey: %s", cookieKey, newRedisKey)
 
-	// SameSite属性をNoneにするために、Secure属性（HTTPS）を設定
-	var secure bool = false
-	if c.Request.URL.Scheme == "https" {
-		secure = true
-	}
-	//HTTPレスポンスヘッダーにCookieを設定
+	// 新しいクッキーを設定
 	cookie := &http.Cookie{
 		Name:     cookieKey,
 		Value:    newRedisKey,
 		Path:     "/",
-		Domain:   "localhost", // 本番環境では正しいドメインを設定
+		Domain:   "localhost",
 		MaxAge:   0,
 		HttpOnly: false,
-		Secure:   secure, // 本番環境ではHTTPSでない場合はfalseにする
+		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
 	}
-	// クッキーをレスポンスに設定
 	http.SetCookie(c.Writer, cookie)
-	log.Printf("クッキーをレスポンスに設定に成功。")
-	return err
+	return nil
 }

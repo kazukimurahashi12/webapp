@@ -9,12 +9,11 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	oldBlog "github.com/kazukimurahashi12/webapp/controller/blog"
-	"github.com/kazukimurahashi12/webapp/controller/common"
 	"github.com/kazukimurahashi12/webapp/infrastructure/db"
 	"github.com/kazukimurahashi12/webapp/interface/controller/auth"
 	authController "github.com/kazukimurahashi12/webapp/interface/controller/auth"
 	blogController "github.com/kazukimurahashi12/webapp/interface/controller/blog"
+	"github.com/kazukimurahashi12/webapp/interface/controller/common"
 	userController "github.com/kazukimurahashi12/webapp/interface/controller/user"
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	"github.com/kazukimurahashi12/webapp/model/redis"
@@ -92,15 +91,15 @@ func GetRouter() *gin.Engine {
 	router.POST("/login", loginController.PostLogin)
 
 	//***ブログ概要画面***
-	router.POST("/blog/post", isAuthenticated(ss), func(c *gin.Context) { oldBlog.PostBlog(c) })
+	router.POST("/blog/post", isAuthenticated(ss), func(c *gin.Context) { blogController.PostBlog(c) })
 	//BlogOverview画面
 	router.GET("/blog/overview", isAuthenticated(ss), homeController.GetMypage)
 	//BlogIDによるView画面
-	router.GET("/blog/overview/post/:id", isAuthenticated(ss), func(c *gin.Context) { oldBlog.GetBlogViewById(c) })
+	router.GET("/blog/overview/post/:id", isAuthenticated(ss), func(c *gin.Context) { blogController.GetBlogViewById(c) })
 	//ブログ記事編集API
-	router.POST("/blog/edit", isAuthenticated(ss), func(c *gin.Context) { oldBlog.PostEditBlog(c, ss) })
+	router.POST("/blog/edit", isAuthenticated(ss), func(c *gin.Context) { blogController.PostEditBlog(c, ss) })
 	//ブログ記事消去API
-	router.GET("/blog/delete/:id", isAuthenticated(ss), func(c *gin.Context) { oldBlog.GetDeleteBlog(c) })
+	router.GET("/blog/delete/:id", isAuthenticated(ss), func(c *gin.Context) { blogController.GetDeleteBlog(c) })
 
 	//***ID情報編集画面***
 	//ID変更API
@@ -116,7 +115,7 @@ func GetRouter() *gin.Engine {
 
 	//***会員情報登録画面***
 	//登録画面遷移
-	router.POST("/regist", isAuthenticated(ss), func(c *gin.Context) { oldBlog.PostRegist(c) })
+	router.POST("/regist", isAuthenticated(ss), func(c *gin.Context) { blogController.PostRegist(c) })
 
 	//***共通API***
 	//セッションからログインIDを取得するAPI

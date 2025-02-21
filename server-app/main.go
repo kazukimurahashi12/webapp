@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/kazukimurahashi12/webapp/controller"
+	"github.com/kazukimurahashi12/webapp/interface/controller"
 )
 
 func main() {

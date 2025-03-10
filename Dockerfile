@@ -10,7 +10,7 @@ COPY server-app/build/app/.env /server-app/build/app/.env
 WORKDIR /server-app
 
 # ポートを開放
-# EXPOSE 8080
+EXPOSE 8080
 
 # ビルドコマンドや実行コマンド
 RUN go build -o main .

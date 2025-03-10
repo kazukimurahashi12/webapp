@@ -4,15 +4,13 @@
 localhost.crt
 localhost.key
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
 
 # testing
 /coverage
 
 # production
+main
+dump.rdb
 /build
 out
 .next

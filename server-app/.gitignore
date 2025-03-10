@@ -11,7 +11,8 @@ localhost.key
 # production
 main
 dump.rdb
-/build
+/build/app/.env
+/build/db/data/.env
 out
 .next
 

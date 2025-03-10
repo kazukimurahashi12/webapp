@@ -4,7 +4,7 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/go
 
 trigger:
-- main
+- master
 
 pool:
   vmImage: ubuntu-latest
@@ -15,25 +15,47 @@ variables:
   GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
   modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)/server-app' # Path to the module's code
 
-steps:
-- script: |
-    mkdir -p '$(GOBIN)'
-    mkdir -p '$(GOPATH)/pkg'
-    mkdir -p '$(modulePath)'
-    shopt -s extglob
-    shopt -s dotglob
-    mv !(gopath) '$(modulePath)'
-    echo '##vso[task.prependpath]$(GOBIN)'
-    echo '##vso[task.prependpath]$(GOROOT)/bin'
-  displayName: 'Set up the Go workspace'
-
-- script: |
-    go version
-    go get -v -t -d ./...
-    if [ -f Gopkg.toml ]; then
-        curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-        dep ensure
-    fi
-    go build -v .
-  workingDirectory: '$(modulePath)' # Change to server-app directory
-  displayName: 'Get dependencies, then build'
+name: $(date:yyyyMMdd)$(rev:.r)
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: refs/heads/feature_cicd
+jobs:
+- job: Job_1
+  displayName: Agent job 1
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - checkout: self
+    clean: true
+    fetchTags: true
+  - task: GoTool@0
+    displayName: Use Go 1.20
+    inputs:
+      version: 1.20
+  - task: Docker@0
+    displayName: build
+    inputs:
+      azureSubscriptionEndpoint: edde5bbe-1ba8-4ce1-8d83-232eb69633c4
+      azureContainerRegistry: '{"loginServer":"kmurahashi.azurecr.io", "id" : "/subscriptions/71bf2874-727f-4673-8c97-50e906012366/resourceGroups/rg_k_murahashi/providers/Microsoft.ContainerRegistry/registries/kmurahashi"}'
+      includeSourceTags: true
+  - task: Docker@0
+    displayName: Push
+    inputs:
+      azureSubscriptionEndpoint: edde5bbe-1ba8-4ce1-8d83-232eb69633c4
+      azureContainerRegistry: '{"loginServer":"kmurahashi.azurecr.io", "id" : "/subscriptions/71bf2874-727f-4673-8c97-50e906012366/resourceGroups/rg_k_murahashi/providers/Microsoft.ContainerRegistry/registries/kmurahashi"}'
+      action: Push an image
+      includeSourceTags: true
+  - task: AzureContainerApps@1
+    displayName: Azure Container Apps Deploy
+    inputs:
+      appSourcePath: $(Build.SourcesDirectory)
+      connectedServiceNameARM: edde5bbe-1ba8-4ce1-8d83-232eb69633c4
+      acrName: kmurahashi
+      dockerfilePath: Dockerfile
+      containerAppName: kmurahashiapp
+      resourceGroup: rg_k_murahashi
+      runtimeStack: ' '
+      disableTelemetry: false
+...

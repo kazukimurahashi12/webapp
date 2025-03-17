@@ -31,7 +31,7 @@ func (r *RegistController) Regist(c *gin.Context) {
 		// バリデーションチェックを実行
 		err := validator.ValidationCheck(c, err)
 		if err != nil {
-			log.Printf("リクエストJSON形式で構造体にバインドを失敗しました。userId: %s, error: %v", registUser.UserId, err)
+			log.Printf("Failed to bind JSON request to struct. userId: %s, error: %v", registUser.UserId, err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -40,7 +40,7 @@ func (r *RegistController) Regist(c *gin.Context) {
 	// 会員情報登録処理UseCase
 	createdUser, err := r.userUseCase.CreateUser(&registUser)
 	if err != nil {
-		log.Printf("会員情報の登録に失敗しました。userId: %s, error: %v", registUser.UserId, err)
+		log.Printf("Failed to register user. userId: %s, error: %v", registUser.UserId, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

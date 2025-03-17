@@ -9,10 +9,9 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kazukimurahashi12/webapp/infrastructure/redis"
+	redis_mock "github.com/kazukimurahashi12/webapp/infrastructure/redis/mock"
 	"github.com/stretchr/testify/assert"
-	"github.com/kazukimurahashi12/webapp/controller/common"
-	"github.com/kazukimurahashi12/webapp/model/redis"
-	redis_mock "github.com/kazukimurahashi12/webapp/model/redis/mock"
 )
 
 func TestGetLoginIdBySession(t *testing.T) {

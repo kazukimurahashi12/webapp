@@ -3,7 +3,7 @@ package domain
 import "time"
 
 type User struct {
-	ID        uint       `json:"id" gorm:"primarykey"`
+	Id        uint       `json:"id" gorm:"primarykey"`
 	CreatedAt time.Time  `json:"createdAt" gorm:"primarykey"`
 	UpdatedAt time.Time  `json:"updatedAt" gorm:"primarykey"`
 	DeletedAt *time.Time `json:"deletedAt" gorm:"index"`

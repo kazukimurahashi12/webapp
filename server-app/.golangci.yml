@@ -1,0 +1,45 @@
+linters:
+  enable-all: false
+  disable-all: true
+  enable: # please keep this alphabetized
+    - depguard # Go linter that checks if package imports are in a list of acceptable packages.
+    - gofmt # go fmt
+    - goimports # goimport
+    - gosec # Inspects source code for security problems.
+    - gosimple # [default] Linter for Go source code that specializes in simplifying code.
+    - govet # [default] Vet examines Go source code and reports suspicious constructs, such as Printf calls whose arguments do not align with the format string.
+    - ineffassign # [default] Detects when assignments to existing variables are not used.
+    - misspell # Finds commonly misspelled English words in comments.
+    - nakedret # Checks that functions with naked returns are not longer than a maximum size (can be zero).
+    - revive # Fast, configurable, extensible, flexible, and beautiful linter for Go. Drop-in replacement of golint.
+    - staticcheck # [default] staticcheck
+    - unconvert # Remove unnecessary type conversions.
+    - unparam # Reports unused function parameters
+    - unused # [default] Checks Go code for unused constants, variables, functions and types.
+    - errcheck # [default] Errcheck is a program for checking for unchecked errors in Go code. These unchecked errors can be critical bugs in some cases.
+    - errorlint # Errorlint is a linter for that can be used to find code that will cause problems with the error wrapping scheme introduced in Go 1.13.
+    - gocritic # chekers (diagnostic, style, performance)
+
+run:
+  timeout: 10m
+
+linters-settings:
+  depguard:
+    rules:
+      main:
+        deny:
+          - pkg: io/ioutil
+            desc: The io/ioutil package has been deprecated, see https://go.dev/doc/go1.16#ioutil
+  revive:
+    rules:
+      - name: package-comments  # パッケージ/関数コメント disable
+        disabled: true
+issues:
+  # The default exclusion rules are a bit too permissive, so copying the relevant ones below
+  exclude-use-default: false
+
+  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
+  max-issues-per-linter: 0
+
+  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
+  max-same-issues: 0

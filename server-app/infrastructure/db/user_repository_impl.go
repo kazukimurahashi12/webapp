@@ -1,10 +1,9 @@
 package db
 
 import (
-	"github.com/kazukimurahashi12/webapp/crypto"
 	"github.com/kazukimurahashi12/webapp/domain"
+	"github.com/kazukimurahashi12/webapp/infrastructure/crypto"
 	"github.com/kazukimurahashi12/webapp/interface/repository"
-	"github.com/kazukimurahashi12/webapp/model/entity"
 )
 
 type userRepository struct {
@@ -16,35 +15,36 @@ func NewUserRepository(db *DB) repository.UserRepository {
 }
 
 func (r *userRepository) FindByID(id string) (*domain.User, error) {
-	user := entity.User{}
+	user := domain.User{}
 	if err := r.db.Table("USERS").Where("id = ?", id).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &domain.User{
-		ID:       user.UserId,
+		Id:       user.Id,
 		Password: user.Password,
 	}, nil
 }
 
 func (r *userRepository) FindByUserID(userID string) (*domain.User, error) {
-	user := entity.User{}
+	user := domain.User{}
 	if err := r.db.Table("USERS").Where("user_id = ?", userID).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &domain.User{
-		ID:       user.UserId,
+		UserId:   user.UserId,
 		Password: user.Password,
 	}, nil
 }
 
 func (r *userRepository) Create(user *domain.User) error {
-	encryptPw, err := crypto.PasswordEncrypt(user.Password)
+	crypto := crypto.NewBcryptCrypto()
+	encryptPw, err := crypto.Encrypt(user.Password)
 	if err != nil {
 		return err
 	}
 
-	newUser := entity.User{
-		UserId:   user.ID,
+	newUser := domain.User{
+		UserId:   user.UserId,
 		Password: encryptPw,
 	}
 
@@ -52,8 +52,8 @@ func (r *userRepository) Create(user *domain.User) error {
 }
 
 func (r *userRepository) Update(user *domain.User) error {
-	existingUser := entity.User{}
-	if err := r.db.Table("USERS").Where("user_id = ?", user.ID).First(&existingUser).Error; err != nil {
+	existingUser := domain.User{}
+	if err := r.db.Table("USERS").Where("user_id = ?", user.Id).First(&existingUser).Error; err != nil {
 		return err
 	}
 
@@ -62,7 +62,7 @@ func (r *userRepository) Update(user *domain.User) error {
 }
 
 func (r *userRepository) UpdateID(oldID, newID string) (*domain.User, error) {
-	user := entity.User{}
+	user := domain.User{}
 	if err := r.db.Table("USERS").Where("user_id = ?", oldID).First(&user).Error; err != nil {
 		return nil, err
 	}
@@ -73,18 +73,19 @@ func (r *userRepository) UpdateID(oldID, newID string) (*domain.User, error) {
 	}
 
 	return &domain.User{
-		ID:       user.UserId,
+		UserId:   user.UserId,
 		Password: user.Password,
 	}, nil
 }
 
 func (r *userRepository) UpdatePassword(userID, newPassword string) (*domain.User, error) {
-	user := entity.User{}
+	user := domain.User{}
 	if err := r.db.Table("USERS").Where("user_id = ?", userID).First(&user).Error; err != nil {
 		return nil, err
 	}
 
-	encryptPw, err := crypto.PasswordEncrypt(newPassword)
+	crypto := crypto.NewBcryptCrypto()
+	encryptPw, err := crypto.Encrypt(newPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +96,7 @@ func (r *userRepository) UpdatePassword(userID, newPassword string) (*domain.Use
 	}
 
 	return &domain.User{
-		ID:       user.UserId,
+		UserId:   user.UserId,
 		Password: user.Password,
 	}, nil
 }

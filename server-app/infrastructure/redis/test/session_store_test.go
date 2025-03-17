@@ -7,13 +7,13 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kazukimurahashi12/webapp/infrastructure/redis"
 	"github.com/stretchr/testify/assert"
-	"github.com/kazukimurahashi12/webapp/model/redis"
 )
 
-func TestNewSession(t *testing.T) {
+func TestCreateSession(t *testing.T) {
 	t.Run("normal case", func(t *testing.T) {
-		// Arrange ---
+		// 準備
 		response := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(response)
 		c.Request, _ = http.NewRequest(
@@ -22,13 +22,13 @@ func TestNewSession(t *testing.T) {
 			nil,
 		)
 
-		// Act ---
+		// 実行
 		cookieKey := "loginUserIdKey"
 		redisValue := "root"
 		redis := redis.NewRedisSessionStore()
-		err := redis.NewSession(c, cookieKey, redisValue)
+		err := redis.CreateSession(c, cookieKey, redisValue)
 
-		// Assert ---
+		// 検証
 		assert.NoError(t, err)
 	})
 }
@@ -68,39 +68,39 @@ func TestGetSession(t *testing.T) {
 		return c2
 	}
 	t.Run("normal case", func(t *testing.T) {
-		// Arrange ---
+		// 準備
 		redis := redis.NewRedisSessionStore()
 		c := setUp(redis)
 
-		// Act ---
+		// 実行
 		redisValue, err := redis.GetSession(c, "loginUserIdKey")
 
-		// Assert ---
+		// 検証
 		assert.NoError(t, err)
 		assert.Equal(t, "root", redisValue)
 	})
 	t.Run("invalid cookie key", func(t *testing.T) {
-		// Arrange ---
+		// 準備
 		redis := redis.NewRedisSessionStore()
 		c := setUp(redis)
 
-		// Act ---
+		//実行
 		redisValue, err := redis.GetSession(c, "invalid")
 
-		// Assert ---
+		// 検証
 		assert.EqualError(t, err, "http: named cookie not present")
 		assert.Empty(t, redisValue)
 	})
 	t.Run("session key not found", func(t *testing.T) {
-		// Arrange ---
+		//準備
 		redis := redis.NewRedisSessionStore()
 		c := setUp(redis)
 		redis.DeleteSession(c, "root")
 
-		// Act ---
+		// 実行
 		redisValue, err := redis.GetSession(c, "loginUserIdKey")
 
-		// Assert ---
+		// 検証
 		assert.EqualError(t, err, "redis: nil")
 		assert.Empty(t, redisValue)
 	})

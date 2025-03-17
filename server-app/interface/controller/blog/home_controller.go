@@ -31,6 +31,7 @@ func init() {
 	defer logger.Sync()
 }
 
+// ブログTOP画面表示
 func (h *HomeController) GetTop(c *gin.Context) {
 	userID, err := h.sessionManager.GetSession(c)
 	if err != nil {
@@ -45,6 +46,7 @@ func (h *HomeController) GetTop(c *gin.Context) {
 		return
 	}
 
+	// ブログ記事取得ORM
 	blogs, err := h.blogUseCase.GetBlogsByUserID(userID)
 	if err != nil {
 		logger.Error("Failed to get blogs", zap.String("userID", userID), zap.Error(err))
@@ -55,6 +57,7 @@ func (h *HomeController) GetTop(c *gin.Context) {
 		return
 	}
 
+	// ブログ記事取得成功
 	logger.Debug("Successfully retrieved blogs", zap.String("userID", userID))
 	c.JSON(http.StatusOK, gin.H{
 		"blogs": blogs,
@@ -65,6 +68,7 @@ func (h *HomeController) GetTop(c *gin.Context) {
 	logrus.Info("@COMPLETE :GetTop")
 }
 
+// マイページ表示
 func (h *HomeController) GetMypage(c *gin.Context) {
 	userID, err := h.sessionManager.GetSession(c)
 	if err != nil {
@@ -72,12 +76,14 @@ func (h *HomeController) GetMypage(c *gin.Context) {
 		return
 	}
 
+	// ユーザー情報取得ORM
 	user, err := h.blogUseCase.GetUserByID(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	// ユーザー情報取得成功
 	c.JSON(http.StatusOK, gin.H{"user": user})
 	logrus.Info("@COMPLETE :GetMypage")
 	c.Next()

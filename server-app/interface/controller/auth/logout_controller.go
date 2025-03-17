@@ -22,6 +22,7 @@ func NewLogoutController(authUseCase auth.UseCase, sessionManager session.Sessio
 	}
 }
 
+// ログアウト処理
 func (l *LogoutController) DecideLogout(c *gin.Context) {
 	var logoutUser domain.FormUser
 	if err := c.ShouldBindJSON(&logoutUser); err != nil {
@@ -30,19 +31,22 @@ func (l *LogoutController) DecideLogout(c *gin.Context) {
 		return
 	}
 
-	user, err := l.authUseCase.Authenticate(logoutUser.UserID, logoutUser.Password)
+	// UseCaseユーザー認証
+	user, err := l.authUseCase.Authenticate(logoutUser.UserId, logoutUser.Password)
 	if err != nil {
 		log.Printf("Authentication failed: %v", err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
+	// セッション削除
 	if err := l.sessionManager.DeleteSession(c); err != nil {
 		log.Printf("Failed to delete session: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	// ログアウト成功
 	log.Println("Successfully logged out:", user.ID)
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }

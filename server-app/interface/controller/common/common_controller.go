@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kazukimurahashi12/webapp/model/redis"
 )
 
 // セッションからログインIDを取得するAPI

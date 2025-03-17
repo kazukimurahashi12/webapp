@@ -22,6 +22,7 @@ func NewSettingController(userUseCase user.UseCase, sessionManager session.Sessi
 	}
 }
 
+// 会員情報編集(id)
 func (s *SettingController) UpdateID(c *gin.Context) {
 	var userUpdate domain.UserIdChange
 	if err := c.ShouldBindJSON(&userUpdate); err != nil {
@@ -30,22 +31,26 @@ func (s *SettingController) UpdateID(c *gin.Context) {
 		return
 	}
 
-	updatedUser, err := s.userUseCase.UpdateUserID(userUpdate.ChangeID, userUpdate.NowID)
+	// UpdateUserID処理ORM
+	updatedUser, err := s.userUseCase.UpdateUserID(userUpdate.ChangeId, userUpdate.NowId)
 	if err != nil {
 		log.Printf("Failed to update user ID: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := s.sessionManager.UpdateSession(c, userUpdate.ChangeID, userUpdate.NowID); err != nil {
+	//redisでセッション破棄、新IDでセッション作成
+	if err := s.sessionManager.UpdateSession(c, userUpdate.ChangeId, userUpdate.NowId); err != nil {
 		log.Printf("Failed to update session: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	log.Printf("Success Change UserId :userUpdate.ChangeId %+v", userUpdate.ChangeId)
 	c.JSON(http.StatusOK, gin.H{"user": updatedUser})
 }
 
+// 会員情報編集(password)
 func (s *SettingController) UpdatePassword(c *gin.Context) {
 	var passwordUpdate domain.UserPwChange
 	if err := c.ShouldBindJSON(&passwordUpdate); err != nil {
@@ -55,7 +60,7 @@ func (s *SettingController) UpdatePassword(c *gin.Context) {
 	}
 
 	updatedUser, err := s.userUseCase.UpdateUserPassword(
-		passwordUpdate.UserID,
+		passwordUpdate.UserId,
 		passwordUpdate.NowPassword,
 		passwordUpdate.ChangePassword,
 	)
@@ -65,17 +70,20 @@ func (s *SettingController) UpdatePassword(c *gin.Context) {
 		return
 	}
 
+	//Redisよりログイン情報セッションを一度消去
 	if err := s.sessionManager.DeleteSession(c); err != nil {
 		log.Printf("Failed to delete session: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := s.sessionManager.CreateSession(updatedUser.ID); err != nil {
+	//RedisよりセッションとCookieにUserIdを新しく登録
+	if err := s.sessionManager.CreateSession(updatedUser.UserId); err != nil {
 		log.Printf("Failed to create new session: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	//会員情報のPW変更に成功
 	c.JSON(http.StatusOK, gin.H{"user": updatedUser})
 }

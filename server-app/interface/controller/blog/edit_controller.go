@@ -1,21 +1,18 @@
 package blog
 
 import (
-	"errors"
 	"log"
 	"net/http"
-	"os"
-
-	"github.com/kazukimurahashi12/webapp/model/redis"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kazukimurahashi12/webapp/model/db"
-	"github.com/kazukimurahashi12/webapp/model/entity"
+	"github.com/kazukimurahashi12/webapp/domain"
+	"github.com/kazukimurahashi12/webapp/infrastructure/redis"
+	"github.com/pkg/errors"
 )
 
-func PostEditBlog(c *gin.Context, redis redis.SessionStore) {
+func PostEditBlog(c *gin.Context, redis redis.RedisSessionStore) {
 	// JSON形式のリクエストボディを構造体にバインドする
-	blogPost := entity.BlogPost{}
+	blogPost := domain.BlogPost{}
 	if err := c.ShouldBindJSON(&blogPost); err != nil {
 		log.Printf("ブログ編集画面リクエストJSON形式で構造体にバインドを失敗しました。" + err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error in c.ShouldBindJSON": err.Error()})
@@ -23,11 +20,10 @@ func PostEditBlog(c *gin.Context, redis redis.SessionStore) {
 	}
 
 	//セッションからloginIDを取得
-	cookieKey := os.Getenv("LOGIN_USER_ID_KEY")
-	id, err := redis.GetSession(c, cookieKey)
+	userID, err := l.sessionManager.GetSession(c)
 	if err != nil {
-		log.Println("セッションからIDの取得に失敗しました。", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Printf("Failed to get session: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 	// ログインユーザーと編集対象のブログのLoginIDを比較
@@ -39,8 +35,7 @@ func PostEditBlog(c *gin.Context, redis redis.SessionStore) {
 	}
 
 	//DBにブログ記事内容を登録
-	blog, err := db.Edit(blogPost.ID, blogPost.LoginID, blogPost.Title, blogPost.Content)
-	if err != nil {
+	if err := blogRepo.Update(&blog); err != nil {
 		log.Println("error", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error in db.Edit": err.Error()})
 		return

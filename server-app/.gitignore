@@ -9,11 +9,9 @@ localhost.key
 /coverage
 
 # production
-main
 dump.rdb
 /build/app/.env
 /build/db/data/.env
-out
 .next
 
 # misc
@@ -26,6 +24,3 @@ out
 /.env.test.local
 /.env.production.local
 
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*

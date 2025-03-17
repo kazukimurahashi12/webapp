@@ -22,13 +22,14 @@ func NewDeleteController(blogUseCase blog.UseCase, sessionManager session.Sessio
 }
 
 // ブログ記事削除
-func GetDeleteBlog(c *gin.Context) {
-	//IDをリクエストから取得
+func (d *DeleteController) DeleteBlog(c *gin.Context) {
+	// IDをリクエストから取得
 	id := c.Param("id")
 
-	err := blogRepo.Delete(id)
+	// ブログ記事削除処理UseCase
+	err := d.blogUseCase.DeleteBlog(id)
 	if err != nil {
-		log.Println("ブログ記事の消去に失敗しました。", err.Error())
+		log.Printf("ブログ記事の削除に失敗しました。id: %s, error: %v", id, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

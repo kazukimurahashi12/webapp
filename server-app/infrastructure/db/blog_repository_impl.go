@@ -17,7 +17,7 @@ func (r *blogRepository) Create(blog *domain.BlogPost) error {
 	newBlog := domain.Blog{
 		Title:   blog.Title,
 		Content: blog.Content,
-		LoginID: blog.LoginID,
+		LoginId: blog.LoginId,
 	}
 	return r.db.Table("BLOGS").Create(&newBlog).Error
 }
@@ -28,10 +28,10 @@ func (r *blogRepository) FindByID(id string) (*domain.Blog, error) {
 		return nil, err
 	}
 	return &domain.Blog{
-		ID:      blog.ID,
+		Id:      blog.Id,
 		Title:   blog.Title,
 		Content: blog.Content,
-		LoginID: blog.LoginID,
+		LoginId: blog.LoginId,
 	}, nil
 }
 
@@ -44,10 +44,10 @@ func (r *blogRepository) FindByUserID(userID string) ([]domain.Blog, error) {
 	var domainBlogs []domain.Blog
 	for _, blog := range blogs {
 		domainBlogs = append(domainBlogs, domain.Blog{
-			ID:      blog.ID,
+			Id:      blog.Id,
 			Title:   blog.Title,
 			Content: blog.Content,
-			LoginID: blog.LoginID,
+			LoginId: blog.LoginId,
 		})
 	}
 	return domainBlogs, nil
@@ -55,7 +55,7 @@ func (r *blogRepository) FindByUserID(userID string) ([]domain.Blog, error) {
 
 func (r *blogRepository) Update(blog *domain.Blog) error {
 	existingBlog := domain.Blog{}
-	if err := r.db.Table("BLOGS").Where("id = ?", blog.ID).First(&existingBlog).Error; err != nil {
+	if err := r.db.Table("BLOGS").Where("id = ?", blog.Id).First(&existingBlog).Error; err != nil {
 		return err
 	}
 

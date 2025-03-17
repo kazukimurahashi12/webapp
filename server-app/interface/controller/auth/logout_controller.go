@@ -47,6 +47,6 @@ func (l *LogoutController) DecideLogout(c *gin.Context) {
 	}
 
 	// ログアウト成功
-	log.Println("Successfully logged out:", user.ID)
+	log.Println("Successfully logged out:", user.Id)
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }

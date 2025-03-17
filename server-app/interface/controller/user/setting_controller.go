@@ -31,7 +31,7 @@ func (s *SettingController) UpdateID(c *gin.Context) {
 		return
 	}
 
-	// UpdateUserID処理ORM
+	// UpdateUserID処理UseCase
 	updatedUser, err := s.userUseCase.UpdateUserID(userUpdate.ChangeId, userUpdate.NowId)
 	if err != nil {
 		log.Printf("Failed to update user ID: %v", err)
@@ -58,7 +58,9 @@ func (s *SettingController) UpdatePassword(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	// TODO 認証チェック
 
+	// UpdateUserPassword処理UseCase
 	updatedUser, err := s.userUseCase.UpdateUserPassword(
 		passwordUpdate.UserId,
 		passwordUpdate.NowPassword,

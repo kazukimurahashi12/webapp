@@ -97,11 +97,11 @@ func GetRouter() *gin.Engine {
 	//BlogOverview画面
 	router.GET("/blog/overview", isAuthenticated(ss), homeController.GetMypage)
 	//BlogIDによるView画面
-	router.GET("/blog/overview/post/:id", isAuthenticated(ss), blogController.GetBlogViewById)
+	router.GET("/blog/overview/post/:id", isAuthenticated(ss), blogController.GetBlogView)
 	//ブログ記事編集API
-	router.POST("/blog/edit", isAuthenticated(ss), func(c *gin.Context) { blogController.PostEditBlog(c, ss) })
+	router.POST("/blog/edit", isAuthenticated(ss), blogController.EditBlog)
 	//ブログ記事消去API
-	router.GET("/blog/delete/:id", isAuthenticated(ss), func(c *gin.Context) { blogController.GetDeleteBlog(c) })
+	router.GET("/blog/delete/:id", isAuthenticated(ss), blogController.DeleteBlog)
 
 	//***ID情報編集画面***
 	//ID変更API
@@ -117,11 +117,14 @@ func GetRouter() *gin.Engine {
 
 	//***会員情報登録画面***
 	//登録画面遷移
-	router.POST("/regist", isAuthenticated(ss), func(c *gin.Context) { blogController.PostRegist(c) })
+	router.POST("/regist", isAuthenticated(ss), blogController.Regist)
+
+	// CommonControllerのインスタンスを生成
+	commonController := common.NewCommonController(ss)
 
 	//***共通API***
 	//セッションからログインIDを取得するAPI
-	router.GET("/api/login-id", isAuthenticated(ss), func(c *gin.Context) { common.GetLoginIdBySession(c, ss) })
+	router.GET("/api/login-id", isAuthenticated(ss), commonController.GetLoginIdBySession)
 
 	//HTTPSサーバーを起動LSプロトコル使用※ハンドラの登録後に実行登録後に実行
 	//第1引数にはポート番号 ":8080" 、第2引数にはTLS証明書のパス、第3引数には秘密鍵のパス

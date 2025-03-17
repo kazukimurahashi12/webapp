@@ -27,7 +27,7 @@ func (b *BlogController) PostBlog(c *gin.Context) {
 	// JSON形式のリクエストボディを構造体にバインドする
 	blogPost := domain.BlogPost{}
 	if err := c.ShouldBindJSON(&blogPost); err != nil {
-		log.Printf("ブログ記事作成画面でJSON形式構造体にバインドを失敗しました。" + err.Error())
+		log.Printf("Failed to bind JSON to struct in blog creation: " + err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -51,7 +51,7 @@ func (b *BlogController) GetBlogView(c *gin.Context) {
 
 	blog, err := b.blogUseCase.GetBlogByID(id)
 	if err != nil {
-		log.Printf("ブログ記事の取得に失敗しました。id: %s, error: %v", id, err)
+		log.Printf("Failed to get blog post. id: %s, error: %v", id, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -65,7 +65,7 @@ func (b *BlogController) EditBlog(c *gin.Context) {
 	// JSON形式のリクエストボディを構造体にバインドする
 	blogPost := domain.BlogPost{}
 	if err := c.ShouldBindJSON(&blogPost); err != nil {
-		log.Printf("ブログ記事編集画面でJSON形式構造体にバインドを失敗しました。error: %v", err)
+		log.Printf("Failed to bind JSON to struct in blog edit. error: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -73,7 +73,7 @@ func (b *BlogController) EditBlog(c *gin.Context) {
 	// ブログ記事更新処理UseCase
 	updatedBlog, err := b.blogUseCase.UpdateBlog(&blogPost)
 	if err != nil {
-		log.Printf("ブログ記事の更新に失敗しました。error: %v", err)
+		log.Printf("Failed to update blog post. error: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -88,7 +88,7 @@ func (b *BlogController) DeleteBlog(c *gin.Context) {
 
 	err := b.blogUseCase.DeleteBlog(id)
 	if err != nil {
-		log.Printf("ブログ記事の削除に失敗しました。id: %s, error: %v", id, err)
+		log.Printf("Failed to delete blog post. id: %s, error: %v", id, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -102,7 +102,7 @@ func (b *BlogController) Regist(c *gin.Context) {
 	// JSON形式のリクエストボディを構造体にバインドする
 	registUser := domain.FormUser{}
 	if err := c.ShouldBindJSON(&registUser); err != nil {
-		log.Printf("会員情報登録画面でJSON形式構造体にバインドを失敗しました。error: %v", err)
+		log.Printf("Failed to bind JSON to struct in user registration. error: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -110,7 +110,7 @@ func (b *BlogController) Regist(c *gin.Context) {
 	// 会員情報登録処理UseCase
 	user, err := b.blogUseCase.NewCreateUser(&registUser)
 	if err != nil {
-		log.Printf("会員情報の登録に失敗しました。error: %v", err)
+		log.Printf("Failed to register user. error: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

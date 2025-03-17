@@ -64,13 +64,13 @@ func (s *RedisSessionStore) GetSession(c *gin.Context) (string, error) {
 	cookieKey := os.Getenv("LOGIN_USER_ID_KEY")
 	redisKey, err := c.Cookie(cookieKey)
 	if err != nil {
-		log.Printf("セッションのクッキーが見つかりませんでした。redisKey: %s, cookieKey: %s, err: %v", redisKey, cookieKey, err)
+		log.Printf("Session cookie not found. redisKey: %s, cookieKey: %s, err: %v", redisKey, cookieKey, err)
 		return "", err
 	}
 
 	redisValue, err := s.conn.Get(context.Background(), redisKey).Result()
 	if err != nil {
-		log.Printf("Redisから対応するセッションデータを取得に失敗しました。redisKey: %s, redisValue: %s, err: %v", redisKey, redisValue, err)
+		log.Printf("Failed to get session data from Redis. redisKey: %s, redisValue: %s, err: %v", redisKey, redisValue, err)
 		return "", err
 	}
 	return redisValue, nil
@@ -85,7 +85,7 @@ func (s *RedisSessionStore) DeleteSession(c *gin.Context) error {
 	}
 
 	if err := s.conn.Del(context.Background(), redisKey).Err(); err != nil {
-		log.Printf("Redisからセッションを削除できませんでした。redisKey: %s, err: %v", redisKey, err)
+		log.Printf("Failed to delete session from Redis. redisKey: %s, err: %v", redisKey, err)
 		return err
 	}
 
@@ -113,7 +113,7 @@ func (s *RedisSessionStore) UpdateSession(c *gin.Context, newID, oldID string) e
 
 	// 古いセッションを削除
 	if err := s.conn.Del(context.Background(), redisKey).Err(); err != nil {
-		log.Printf("Redisからセッションを削除できませんでした。redisKey: %s, err: %v", redisKey, err)
+		log.Printf("Failed to delete session from Redis. redisKey: %s, err: %v", redisKey, err)
 		return err
 	}
 

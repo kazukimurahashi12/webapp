@@ -26,7 +26,7 @@ func (e *EditController) EditBlog(c *gin.Context) {
 	// JSON形式のリクエストボディを構造体にバインドする
 	blogPost := domain.BlogPost{}
 	if err := c.ShouldBindJSON(&blogPost); err != nil {
-		log.Printf("ブログ編集画面リクエストJSON形式で構造体にバインドを失敗しました。error: %v", err)
+		log.Printf("Failed to bind JSON request to struct in blog edit. error: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -41,15 +41,15 @@ func (e *EditController) EditBlog(c *gin.Context) {
 
 	// ログインユーザーと編集対象のブログのLoginIDを比較
 	if userID != blogPost.LoginId {
-		log.Printf("ログインユーザーと編集対象のブログのLoginIDが一致しません。userID: %s, blogPost.LoginID: %s", userID, blogPost.LoginId)
-		c.JSON(http.StatusForbidden, gin.H{"error": "ログインユーザーと編集対象のブログのLoginIDが一致しません"})
+		log.Printf("Login user ID does not match blog post's LoginID. userID: %s, blogPost.LoginID: %s", userID, blogPost.LoginId)
+		c.JSON(http.StatusForbidden, gin.H{"error": "login user LoginID does not match the target blog's LoginID"})
 		return
 	}
 
 	// ブログ記事更新処理UseCase
 	updatedBlog, err := e.blogUseCase.UpdateBlog(&blogPost)
 	if err != nil {
-		log.Printf("ブログ記事の更新に失敗しました。error: %v", err)
+		log.Printf("Failed to update blog post. error: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

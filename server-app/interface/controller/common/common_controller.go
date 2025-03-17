@@ -23,7 +23,7 @@ func (c *CommonController) GetLoginIdBySession(ctx *gin.Context) {
 	// セッションからIDを取得
 	id, err := c.sessionManager.GetSession(ctx)
 	if err != nil {
-		log.Printf("セッションからIDの取得に失敗しました。error: %v", err)
+		log.Printf("Failed to get ID from session. error: %v", err)
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}

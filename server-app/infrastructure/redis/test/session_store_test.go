@@ -12,7 +12,7 @@ import (
 )
 
 func TestCreateSession(t *testing.T) {
-	t.Run("normal case", func(t *testing.T) {
+	t.Run("正常系", func(t *testing.T) {
 		// 準備
 		response := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(response)
@@ -23,10 +23,8 @@ func TestCreateSession(t *testing.T) {
 		)
 
 		// 実行
-		cookieKey := "loginUserIdKey"
-		redisValue := "root"
-		redis := redis.NewRedisSessionStore()
-		err := redis.CreateSession(c, cookieKey, redisValue)
+		store := redis.NewRedisSessionStore()
+		err := store.CreateSession("test-user")
 
 		// 検証
 		assert.NoError(t, err)
@@ -34,7 +32,7 @@ func TestCreateSession(t *testing.T) {
 }
 
 func TestGetSession(t *testing.T) {
-	setUp := func(redis redis.SessionStore) *gin.Context {
+	setUp := func(store *redis.RedisSessionStore) *gin.Context {
 		res1 := httptest.NewRecorder()
 		c1, _ := gin.CreateTestContext(res1)
 		c1.Request, _ = http.NewRequest(
@@ -43,16 +41,16 @@ func TestGetSession(t *testing.T) {
 			nil,
 		)
 
-		// セッション情報を設定
-		os.Setenv("LOGIN_USER_ID_KEY", "loginUserIdKey") // テスト用の環境変数を設定
-		err := redis.NewSession(c1, "loginUserIdKey", "root")
+		// セッションを設定
+		os.Setenv("LOGIN_USER_ID_KEY", "loginUserIdKey")
+		err := store.CreateSession("root")
 		assert.NoError(t, err)
 
-		// クッキーが設定されているか確認
-		firstResponseCookies := res1.Result().Cookies()
-		assert.NotEmpty(t, firstResponseCookies)
+		// クッキーを取得
+		cookie, err := c1.Cookie("loginUserIdKey")
+		assert.NoError(t, err)
 
-		// 同一リクエスト内でクッキーの値を読むことはできないため、新しいリクエストを作成
+		// クッキーを設定した新しいリクエストを作成
 		res2 := httptest.NewRecorder()
 		c2, _ := gin.CreateTestContext(res2)
 		c2.Request, _ = http.NewRequest(
@@ -60,48 +58,75 @@ func TestGetSession(t *testing.T) {
 			"/api/login-id",
 			nil,
 		)
-
-		// 最初のリクエストで設定されたクッキーを2回目のリクエストに設定
-		for _, cookie := range firstResponseCookies {
-			c2.Request.AddCookie(cookie)
-		}
+		c2.Request.AddCookie(&http.Cookie{
+			Name:  "loginUserIdKey",
+			Value: cookie,
+		})
 		return c2
 	}
-	t.Run("normal case", func(t *testing.T) {
+
+	t.Run("正常系", func(t *testing.T) {
 		// 準備
-		redis := redis.NewRedisSessionStore()
-		c := setUp(redis)
+		store := redis.NewRedisSessionStore()
+		c := setUp(store)
 
 		// 実行
-		redisValue, err := redis.GetSession(c, "loginUserIdKey")
+		userID, err := store.GetSession(c)
 
 		// 検証
 		assert.NoError(t, err)
-		assert.Equal(t, "root", redisValue)
+		assert.Equal(t, "root", userID)
 	})
-	t.Run("invalid cookie key", func(t *testing.T) {
+
+	t.Run("無効なクッキーキー", func(t *testing.T) {
 		// 準備
-		redis := redis.NewRedisSessionStore()
-		c := setUp(redis)
-
-		//実行
-		redisValue, err := redis.GetSession(c, "invalid")
-
-		// 検証
-		assert.EqualError(t, err, "http: named cookie not present")
-		assert.Empty(t, redisValue)
-	})
-	t.Run("session key not found", func(t *testing.T) {
-		//準備
-		redis := redis.NewRedisSessionStore()
-		c := setUp(redis)
-		redis.DeleteSession(c, "root")
+		store := redis.NewRedisSessionStore()
+		c, _ := gin.CreateTestContext(httptest.NewRecorder())
+		c.Request, _ = http.NewRequest(
+			http.MethodGet,
+			"/api/login-id",
+			nil,
+		)
 
 		// 実行
-		redisValue, err := redis.GetSession(c, "loginUserIdKey")
+		_, err := store.GetSession(c)
 
 		// 検証
-		assert.EqualError(t, err, "redis: nil")
-		assert.Empty(t, redisValue)
+		assert.Error(t, err)
+	})
+
+	t.Run("セッションキーが見つからない場合", func(t *testing.T) {
+		// 準備
+		store := redis.NewRedisSessionStore()
+		c := setUp(store)
+		err := store.DeleteSession(c)
+		assert.NoError(t, err)
+
+		// 実行
+		_, err = store.GetSession(c)
+
+		// 検証
+		assert.Error(t, err)
+	})
+}
+
+func TestDeleteSession(t *testing.T) {
+	t.Run("正常系", func(t *testing.T) {
+		// 準備
+		store := redis.NewRedisSessionStore()
+		c, _ := gin.CreateTestContext(httptest.NewRecorder())
+		c.Request, _ = http.NewRequest(
+			http.MethodGet,
+			"/api/login-id",
+			nil,
+		)
+		err := store.CreateSession("test-user")
+		assert.NoError(t, err)
+
+		// 実行
+		err = store.DeleteSession(c)
+
+		// 検証
+		assert.NoError(t, err)
 	})
 }

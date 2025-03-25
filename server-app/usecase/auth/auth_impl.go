@@ -15,10 +15,12 @@ func NewAuthUseCase(userRepo repository.UserRepository) UseCase {
 	}
 }
 
+// ユーザーIDとパスワードを元に認証
 func (a *authUseCase) Authenticate(userID, password string) (*domain.User, error) {
 	return a.userRepo.FindByID(userID)
 }
 
+// ユーザーIDを元にユーザー情報を取得
 func (a *authUseCase) GetUserByID(userID string) (*domain.User, error) {
 	return a.userRepo.FindByID(userID)
 }

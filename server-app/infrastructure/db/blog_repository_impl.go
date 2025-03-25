@@ -13,6 +13,7 @@ func NewBlogRepository(db *DB) repository.BlogRepository {
 	return &blogRepository{db: db}
 }
 
+// ブログを作成
 func (r *blogRepository) Create(blog *domain.BlogPost) error {
 	newBlog := domain.Blog{
 		Title:   blog.Title,
@@ -22,6 +23,7 @@ func (r *blogRepository) Create(blog *domain.BlogPost) error {
 	return r.db.Table("BLOGS").Create(&newBlog).Error
 }
 
+// ブログを取得
 func (r *blogRepository) FindByID(id string) (*domain.Blog, error) {
 	blog := domain.Blog{}
 	if err := r.db.Table("BLOGS").Where("id = ?", id).First(&blog).Error; err != nil {
@@ -35,6 +37,7 @@ func (r *blogRepository) FindByID(id string) (*domain.Blog, error) {
 	}, nil
 }
 
+// ユーザーIDに紐づくブログを取得
 func (r *blogRepository) FindByUserID(userID string) ([]domain.Blog, error) {
 	var blogs []domain.Blog
 	if err := r.db.Table("BLOGS").Where("user_id = ?", userID).Find(&blogs).Error; err != nil {
@@ -53,6 +56,7 @@ func (r *blogRepository) FindByUserID(userID string) ([]domain.Blog, error) {
 	return domainBlogs, nil
 }
 
+// ブログを更新
 func (r *blogRepository) Update(blog *domain.Blog) error {
 	existingBlog := domain.Blog{}
 	if err := r.db.Table("BLOGS").Where("id = ?", blog.Id).First(&existingBlog).Error; err != nil {
@@ -64,6 +68,7 @@ func (r *blogRepository) Update(blog *domain.Blog) error {
 	return r.db.Table("BLOGS").Save(&existingBlog).Error
 }
 
+// ブログを削除
 func (r *blogRepository) Delete(id string) error {
 	return r.db.Table("BLOGS").Where("id = ?", id).Delete(&domain.Blog{}).Error
 }

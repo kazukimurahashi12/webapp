@@ -2,6 +2,7 @@ package repository
 
 import "github.com/kazukimurahashi12/webapp/domain"
 
+// ブログRepositoryインターフェース
 type BlogRepository interface {
 	Create(blog *domain.BlogPost) error
 	FindByID(id string) (*domain.Blog, error)

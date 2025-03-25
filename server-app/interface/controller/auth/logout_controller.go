@@ -10,6 +10,10 @@ import (
 	"github.com/kazukimurahashi12/webapp/usecase/auth"
 )
 
+//#######################################
+//ログアウトコントローラー
+//#######################################
+
 type LogoutController struct {
 	authUseCase    auth.UseCase
 	sessionManager session.SessionManager

@@ -11,6 +11,10 @@ import (
 	"github.com/kazukimurahashi12/webapp/usecase/validator"
 )
 
+//#######################################
+//ログインコントローラー
+//#######################################
+
 type LoginController struct {
 	authUseCase    auth.UseCase
 	sessionManager session.SessionManager

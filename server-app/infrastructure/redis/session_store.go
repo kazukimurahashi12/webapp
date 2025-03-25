@@ -15,12 +15,17 @@ import (
 	"github.com/kazukimurahashi12/webapp/interface/session"
 )
 
+//#######################################
+//Redis接続処理
+//#######################################
+
 var _ session.SessionManager = &RedisSessionStore{}
 
 type RedisSessionStore struct {
 	conn *redis.Client
 }
 
+// RedisClientインスタン作成
 func NewRedisSessionStore() *RedisSessionStore {
 	//環境変数設定
 	//main.goからの相対パス指定
@@ -45,6 +50,7 @@ func NewRedisSessionStore() *RedisSessionStore {
 	return &RedisSessionStore{conn: conn}
 }
 
+// セッションを作成
 func (s *RedisSessionStore) CreateSession(userID string) error {
 	slice := make([]byte, 64)
 	if _, err := io.ReadFull(rand.Reader, slice); err != nil {
@@ -60,6 +66,7 @@ func (s *RedisSessionStore) CreateSession(userID string) error {
 	return nil
 }
 
+// セッションを取得
 func (s *RedisSessionStore) GetSession(c *gin.Context) (string, error) {
 	cookieKey := os.Getenv("LOGIN_USER_ID_KEY")
 	redisKey, err := c.Cookie(cookieKey)
@@ -76,6 +83,7 @@ func (s *RedisSessionStore) GetSession(c *gin.Context) (string, error) {
 	return redisValue, nil
 }
 
+// セッションを削除
 func (s *RedisSessionStore) DeleteSession(c *gin.Context) error {
 	cookieKey := os.Getenv("LOGIN_USER_ID_KEY")
 	redisKey, err := c.Cookie(cookieKey)
@@ -103,6 +111,7 @@ func (s *RedisSessionStore) DeleteSession(c *gin.Context) error {
 	return nil
 }
 
+// セッションを更新
 func (s *RedisSessionStore) UpdateSession(c *gin.Context, newID, oldID string) error {
 	cookieKey := os.Getenv("LOGIN_USER_ID_KEY")
 	redisKey, err := c.Cookie(cookieKey)

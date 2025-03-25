@@ -14,6 +14,7 @@ func NewUserRepository(db *DB) repository.UserRepository {
 	return &userRepository{db: db}
 }
 
+// シーケンシャルIDによりユーザーを取得
 func (r *userRepository) FindByID(id string) (*domain.User, error) {
 	user := domain.User{}
 	if err := r.db.Table("USERS").Where("id = ?", id).First(&user).Error; err != nil {
@@ -25,6 +26,7 @@ func (r *userRepository) FindByID(id string) (*domain.User, error) {
 	}, nil
 }
 
+// ユーザーIDに紐づくユーザーを取得
 func (r *userRepository) FindByUserID(userID string) (*domain.User, error) {
 	user := domain.User{}
 	if err := r.db.Table("USERS").Where("user_id = ?", userID).First(&user).Error; err != nil {
@@ -36,6 +38,7 @@ func (r *userRepository) FindByUserID(userID string) (*domain.User, error) {
 	}, nil
 }
 
+// ユーザーを作成
 func (r *userRepository) Create(user *domain.User) error {
 	crypto := crypto.NewBcryptCrypto()
 	encryptPw, err := crypto.Encrypt(user.Password)
@@ -61,6 +64,7 @@ func (r *userRepository) Update(user *domain.User) error {
 	return r.db.Table("USERS").Save(&existingUser).Error
 }
 
+// ユーザーIDを変更
 func (r *userRepository) UpdateID(oldID, newID string) (*domain.User, error) {
 	user := domain.User{}
 	if err := r.db.Table("USERS").Where("user_id = ?", oldID).First(&user).Error; err != nil {
@@ -78,6 +82,7 @@ func (r *userRepository) UpdateID(oldID, newID string) (*domain.User, error) {
 	}, nil
 }
 
+// ユーザーPWを変更
 func (r *userRepository) UpdatePassword(userID, newPassword string) (*domain.User, error) {
 	user := domain.User{}
 	if err := r.db.Table("USERS").Where("user_id = ?", userID).First(&user).Error; err != nil {

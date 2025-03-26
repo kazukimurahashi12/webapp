@@ -6,18 +6,9 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"github.com/kazukimurahashi12/webapp/infrastructure/di"
 	"github.com/kazukimurahashi12/webapp/infrastructure/web"
 )
-
-func init() {
-	//環境変数設定
-	//main.goからの相対パス指定
-	if err := godotenv.Load("./build/app/.env"); err != nil {
-		log.Println("Error loading .env file:", err)
-	}
-}
 
 // APIエンドポイントのルーティング
 func GetRouter() *gin.Engine {

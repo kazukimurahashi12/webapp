@@ -11,6 +11,7 @@ import (
 	"github.com/kazukimurahashi12/webapp/interface/controller/common"
 	"github.com/kazukimurahashi12/webapp/interface/session/mock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestGetLoginIdBySession(t *testing.T) {
@@ -27,7 +28,8 @@ func TestGetLoginIdBySession(t *testing.T) {
 		sessionMock := mock.NewMockSessionManager(t)
 		sessionMock.On("GetSession", c).Return("id", nil)
 
-		controller := common.NewCommonController(sessionMock)
+		logger := zap.NewNop()
+		controller := common.NewCommonController(sessionMock, logger)
 
 		// 実行
 		controller.GetLoginIdBySession(c)
@@ -54,7 +56,8 @@ func TestGetLoginIdBySession(t *testing.T) {
 		sessionMock := mock.NewMockSessionManager(t)
 		sessionMock.On("GetSession", c).Return("", errors.New("session error"))
 
-		controller := common.NewCommonController(sessionMock)
+		logger := zap.NewNop()
+		controller := common.NewCommonController(sessionMock, logger)
 
 		// 実行
 		controller.GetLoginIdBySession(c)

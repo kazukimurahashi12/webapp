@@ -1,20 +1,22 @@
 package common
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kazukimurahashi12/webapp/interface/session"
+	"go.uber.org/zap"
 )
 
 type CommonController struct {
 	sessionManager session.SessionManager
+	logger         *zap.Logger
 }
 
-func NewCommonController(sessionManager session.SessionManager) *CommonController {
+func NewCommonController(sessionManager session.SessionManager, logger *zap.Logger) *CommonController {
 	return &CommonController{
 		sessionManager: sessionManager,
+		logger:         logger,
 	}
 }
 
@@ -23,11 +25,18 @@ func (c *CommonController) GetLoginIdBySession(ctx *gin.Context) {
 	// セッションからIDを取得
 	id, err := c.sessionManager.GetSession(ctx)
 	if err != nil {
-		log.Printf("Failed to get ID from session. error: %v", err)
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.logger.Error("Failed to get ID from session", zap.Error(err))
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"error": "セッションが無効です。再度ログインしてください",
+			"code":  "SESSION_INVALID",
+		})
 		return
 	}
 
-	log.Printf("Success Get LoginId bySession :id %+v", id)
-	ctx.JSON(http.StatusOK, gin.H{"id": id})
+	c.logger.Info("Successfully fetched login ID from session", zap.String("id", id))
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "ログインIDを取得しました",
+		"code":    "LOGIN_ID_FETCHED",
+		"id":      id,
+	})
 }

@@ -1,23 +1,25 @@
 package blog
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	"github.com/kazukimurahashi12/webapp/usecase/blog"
+	"go.uber.org/zap"
 )
 
 type DeleteController struct {
 	blogUseCase    blog.UseCase
 	sessionManager session.SessionManager
+	logger         *zap.Logger
 }
 
-func NewDeleteController(blogUseCase blog.UseCase, sessionManager session.SessionManager) *DeleteController {
+func NewDeleteController(blogUseCase blog.UseCase, sessionManager session.SessionManager, logger *zap.Logger) *DeleteController {
 	return &DeleteController{
 		blogUseCase:    blogUseCase,
 		sessionManager: sessionManager,
+		logger:         logger,
 	}
 }
 
@@ -29,11 +31,18 @@ func (d *DeleteController) DeleteBlog(c *gin.Context) {
 	// ブログ記事削除処理UseCase
 	err := d.blogUseCase.DeleteBlog(id)
 	if err != nil {
-		log.Printf("Failed to delete blog post. id: %s, error: %v", id, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		d.logger.Error("Failed to delete blog post", zap.String("id", id), zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ブログ記事の削除に失敗しました",
+			"code":  "BLOG_DELETION_FAILED",
+		})
 		return
 	}
 
-	log.Printf("Success Deleted Blog :blog.id %+v", id)
-	c.JSON(http.StatusOK, gin.H{"Deleted blog.id": id})
+	d.logger.Info("Successfully deleted blog post", zap.String("id", id))
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ブログ記事を削除しました",
+		"code":    "BLOG_DELETED",
+		"blog_id": id,
+	})
 }

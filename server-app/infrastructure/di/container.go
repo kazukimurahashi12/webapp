@@ -1,6 +1,8 @@
 package di
 
 import (
+	"go.uber.org/zap"
+
 	"github.com/kazukimurahashi12/webapp/infrastructure/db"
 	"github.com/kazukimurahashi12/webapp/infrastructure/redis"
 	"github.com/kazukimurahashi12/webapp/interface/controller/auth"
@@ -23,11 +25,18 @@ type Container struct {
 	LogoutController  *auth.LogoutController
 	CommonController  *common.CommonController
 	SessionManager    session.SessionManager
+	logger            *zap.Logger
 }
 
 // Container依存性注入用のコンストラクタ
 func NewContainer() *Container {
-	//　セッションストア初期化
+	// ロガー初期化
+	logger, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
+
+	// セッションストア初期化
 	ss := redis.NewRedisSessionStore()
 
 	// DBClient初期化
@@ -44,12 +53,13 @@ func NewContainer() *Container {
 
 	// Controller初期化
 	return &Container{
-		HomeController:    blogController.NewHomeController(blogUC, ss),
-		LoginController:   authController.NewLoginController(authUC, ss),
-		BlogController:    blogController.NewBlogController(blogUC, ss),
-		SettingController: userController.NewSettingController(userUC, ss),
-		LogoutController:  auth.NewLogoutController(authUC, ss),
-		CommonController:  common.NewCommonController(ss),
+		HomeController:    blogController.NewHomeController(blogUC, ss, logger),
+		LoginController:   authController.NewLoginController(authUC, ss, logger),
+		BlogController:    blogController.NewBlogController(blogUC, ss, logger),
+		SettingController: userController.NewSettingController(userUC, ss, logger),
+		LogoutController:  auth.NewLogoutController(authUC, ss, logger),
+		CommonController:  common.NewCommonController(ss, logger),
 		SessionManager:    ss,
+		logger:            logger,
 	}
 }

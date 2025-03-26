@@ -28,9 +28,9 @@ type Container struct {
 	logger            *zap.Logger
 }
 
-// Container依存性注入用のコンストラクタ
+// DI依存性注入用のコンストラクタ
 func NewContainer() *Container {
-	// ロガー初期化
+	// Zapロガー初期化
 	logger, err := zap.NewProduction()
 	if err != nil {
 		panic(err)

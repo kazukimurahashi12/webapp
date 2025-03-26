@@ -1,24 +1,26 @@
 package blog
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kazukimurahashi12/webapp/domain"
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	"github.com/kazukimurahashi12/webapp/usecase/blog"
+	"go.uber.org/zap"
 )
 
 type BlogController struct {
 	blogUseCase    blog.UseCase
 	sessionManager session.SessionManager
+	logger         *zap.Logger
 }
 
-func NewBlogController(blogUseCase blog.UseCase, sessionManager session.SessionManager) *BlogController {
+func NewBlogController(blogUseCase blog.UseCase, sessionManager session.SessionManager, logger *zap.Logger) *BlogController {
 	return &BlogController{
 		blogUseCase:    blogUseCase,
 		sessionManager: sessionManager,
+		logger:         logger,
 	}
 }
 
@@ -27,22 +29,31 @@ func (b *BlogController) PostBlog(c *gin.Context) {
 	// JSON形式のリクエストボディを構造体にバインドする
 	blogPost := domain.BlogPost{}
 	if err := c.ShouldBindJSON(&blogPost); err != nil {
-		log.Printf("Failed to bind JSON to struct in blog creation: " + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		b.logger.Error("Failed to bind JSON to struct in blog creation", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ブログ投稿データの形式が不正です",
+			"code":  "INVALID_BLOG_FORMAT",
+		})
 		return
 	}
 
 	// ブログ記事登録処理UseCase
 	blog, err := b.blogUseCase.NewCreateBlog(&blogPost)
 	if err != nil {
-		log.Println("error", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		b.logger.Error("Failed to create blog", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ブログ記事の登録に失敗しました",
+			"code":  "BLOG_CREATION_FAILED",
+		})
 		return
 	}
 
-	// DBにブログ記事登録に成功
-	log.Printf("Success Post Blog :blog %+v", blog)
-	c.JSON(http.StatusOK, gin.H{"blog": blog})
+	b.logger.Info("Successfully created blog", zap.Any("blog", blog))
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ブログ記事を登録しました",
+		"code":    "BLOG_CREATED",
+		"blog":    blog,
+	})
 }
 
 // ブログ記事詳細取得
@@ -51,13 +62,20 @@ func (b *BlogController) GetBlogView(c *gin.Context) {
 
 	blog, err := b.blogUseCase.GetBlogByID(id)
 	if err != nil {
-		log.Printf("Failed to get blog post. id: %s, error: %v", id, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		b.logger.Error("Failed to bind JSON to struct in blog creation", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ブログ記事の取得に失敗しました",
+			"code":  "BLOG_FETCH_FAILED",
+		})
 		return
 	}
 
-	log.Printf("Success Get Blog View :blog %+v", blog)
-	c.JSON(http.StatusOK, gin.H{"blog": blog})
+	b.logger.Info("Successfully fetched blog", zap.Any("blog", blog))
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ブログ記事を取得しました",
+		"code":    "BLOG_FETCHED",
+		"blog":    blog,
+	})
 }
 
 // ブログ記事編集
@@ -65,21 +83,31 @@ func (b *BlogController) EditBlog(c *gin.Context) {
 	// JSON形式のリクエストボディを構造体にバインドする
 	blogPost := domain.BlogPost{}
 	if err := c.ShouldBindJSON(&blogPost); err != nil {
-		log.Printf("Failed to bind JSON to struct in blog edit. error: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		b.logger.Error("Failed to bind JSON in blog edit", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ブログ編集データの形式が不正です",
+			"code":  "INVALID_BLOG_EDIT_FORMAT",
+		})
 		return
 	}
 
 	// ブログ記事更新処理UseCase
 	updatedBlog, err := b.blogUseCase.UpdateBlog(&blogPost)
 	if err != nil {
-		log.Printf("Failed to update blog post. error: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		b.logger.Error("Failed to update blog", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ブログ記事の更新に失敗しました",
+			"code":  "BLOG_UPDATE_FAILED",
+		})
 		return
 	}
 
-	log.Printf("Success Edit Blog :blog %+v", updatedBlog)
-	c.JSON(http.StatusOK, gin.H{"blog": updatedBlog})
+	b.logger.Info("Successfully updated blog", zap.Any("blog", updatedBlog))
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ブログ記事を更新しました",
+		"code":    "BLOG_UPDATED",
+		"blog":    updatedBlog,
+	})
 }
 
 // ブログ記事削除
@@ -88,13 +116,20 @@ func (b *BlogController) DeleteBlog(c *gin.Context) {
 
 	err := b.blogUseCase.DeleteBlog(id)
 	if err != nil {
-		log.Printf("Failed to delete blog post. id: %s, error: %v", id, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		b.logger.Error("Failed to delete blog", zap.String("id", id), zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ブログ記事の削除に失敗しました",
+			"code":  "BLOG_DELETION_FAILED",
+		})
 		return
 	}
 
-	log.Printf("Success Deleted Blog :blog.id %+v", id)
-	c.JSON(http.StatusOK, gin.H{"Deleted blog.id": id})
+	b.logger.Info("Successfully deleted blog", zap.String("id", id))
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ブログ記事を削除しました",
+		"code":    "BLOG_DELETED",
+		"blog_id": id,
+	})
 }
 
 // 会員情報登録
@@ -102,19 +137,29 @@ func (b *BlogController) Regist(c *gin.Context) {
 	// JSON形式のリクエストボディを構造体にバインドする
 	registUser := domain.FormUser{}
 	if err := c.ShouldBindJSON(&registUser); err != nil {
-		log.Printf("Failed to bind JSON to struct in user registration. error: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		b.logger.Error("Failed to bind JSON in user registration", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ユーザー登録データの形式が不正です",
+			"code":  "INVALID_USER_REGIST_FORMAT",
+		})
 		return
 	}
 
 	// 会員情報登録処理UseCase
 	user, err := b.blogUseCase.NewCreateUser(&registUser)
 	if err != nil {
-		log.Printf("Failed to register user. error: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		b.logger.Error("Failed to register user", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ユーザー登録に失敗しました",
+			"code":  "USER_REGISTRATION_FAILED",
+		})
 		return
 	}
 
-	log.Printf("Success Regist User :user %+v", user)
-	c.JSON(http.StatusOK, gin.H{"user": user})
+	b.logger.Info("Successfully registered user", zap.Any("user", user))
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ユーザー登録が完了しました",
+		"code":    "USER_REGISTERED",
+		"user":    user,
+	})
 }

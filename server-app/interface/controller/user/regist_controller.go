@@ -1,7 +1,6 @@
 package user
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,17 +8,20 @@ import (
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	"github.com/kazukimurahashi12/webapp/usecase/user"
 	"github.com/kazukimurahashi12/webapp/usecase/validator"
+	"go.uber.org/zap"
 )
 
 type RegistController struct {
 	userUseCase    user.UseCase
 	sessionManager session.SessionManager
+	logger         *zap.Logger
 }
 
-func NewRegistController(userUseCase user.UseCase, sessionManager session.SessionManager) *RegistController {
+func NewRegistController(userUseCase user.UseCase, sessionManager session.SessionManager, logger *zap.Logger) *RegistController {
 	return &RegistController{
 		userUseCase:    userUseCase,
 		sessionManager: sessionManager,
+		logger:         logger,
 	}
 }
 
@@ -31,8 +33,11 @@ func (r *RegistController) Regist(c *gin.Context) {
 		// バリデーションチェックを実行
 		err := validator.ValidationCheck(c, err)
 		if err != nil {
-			log.Printf("Failed to bind JSON request to struct. userId: %s, error: %v", registUser.UserId, err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			r.logger.Error("Failed to bind JSON request", zap.String("userId", registUser.UserId), zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "リクエスト形式が不正です",
+				"code":  "INVALID_REQUEST_FORMAT",
+			})
 			return
 		}
 	}
@@ -40,11 +45,18 @@ func (r *RegistController) Regist(c *gin.Context) {
 	// 会員情報登録処理UseCase
 	createdUser, err := r.userUseCase.CreateUser(&registUser)
 	if err != nil {
-		log.Printf("Failed to register user. userId: %s, error: %v", registUser.UserId, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		r.logger.Error("Failed to register user", zap.String("userId", registUser.UserId), zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ユーザー登録に失敗しました",
+			"code":  "USER_REGISTRATION_FAILED",
+		})
 		return
 	}
 
-	log.Printf("Success Regist User :user %+v", createdUser)
-	c.JSON(http.StatusOK, gin.H{"user": createdUser})
+	r.logger.Info("Successfully registered user", zap.Any("user", createdUser))
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ユーザー登録が完了しました",
+		"code":    "USER_REGISTERED",
+		"user":    createdUser,
+	})
 }

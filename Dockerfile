@@ -1,19 +1,34 @@
-FROM golang:latest
+# ビルドステージ
+FROM golang:latest AS builder
 
-# ホストのファイルをコンテナにコピー
-COPY server-app/ /server-app
-
-# .env ファイルをコンテナ内にコピー
-COPY server-app/build/app/.env /server-app/build/app/.env
-
-# 作業ディレクトリを指定
+# 作業ディレクトリ
 WORKDIR /server-app
 
-# ポートを開放
-EXPOSE 8080
+# ホストのファイルをコンテナにコピー
+COPY server-app/ .
 
-# ビルドコマンドや実行コマンド
+# アプリケーションビルド
 RUN go build -o main .
 
-# コンテナが起動した際に実行するコマンドやアプリケーションを指定
+# 実行ステージ
+FROM ubuntu:latest AS runner
+
+# ランタイム依存関係
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# 作業ディレクトリを作成
+WORKDIR /app
+
+# ビルドステージからビルド済みのバイナリをコピー
+COPY --from=builder /server-app/main .
+
+# .env ファイルコピー
+COPY server-app/build/app/.env ./build/app/.env
+
+# ポート開放
+EXPOSE 8080
+
+# 実行コマンド
 CMD ["./main"]

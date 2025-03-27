@@ -3,14 +3,20 @@ package db
 import (
 	"github.com/kazukimurahashi12/webapp/domain"
 	"github.com/kazukimurahashi12/webapp/interface/repository"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 type blogRepository struct {
-	db *DB
+	db     *gorm.DB
+	logger *zap.Logger
 }
 
-func NewBlogRepository(db *DB) repository.BlogRepository {
-	return &blogRepository{db: db}
+func NewBlogRepository(manager *DBManager) repository.BlogRepository {
+	return &blogRepository{
+		db:     manager.db,
+		logger: manager.logger,
+	}
 }
 
 // ブログを作成

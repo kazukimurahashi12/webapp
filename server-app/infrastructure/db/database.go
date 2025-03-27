@@ -2,79 +2,207 @@ package db
 
 import (
 	"fmt"
-	"log"
 	"os"
+	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
+
+	mysqlDriver "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
-//#######################################
-//RDB接続処理
-//#######################################
-
-// DB構造体
-type DB struct {
-	*gorm.DB
+// DBマネージャー構造体
+type DBManager struct {
+	db     *gorm.DB
+	logger *zap.Logger
 }
 
-// DB接続用初期設定
-func NewDB() *DB {
-	//環境変数設定
-	//main.goからの相対パス指定
-	envErr := godotenv.Load("./build/db/data/.env")
-	if envErr != nil {
-		fmt.Println("Error loading .env file", envErr)
+// // DB構造体
+// type DB struct {
+// 	*gorm.DB
+// }
+
+// シングルトンインスタンス
+var dbManager *DBManager
+
+// RDB接続設定情報構造体
+// カプセル化
+type config struct {
+	User       string
+	Password   string
+	Host       string
+	Database   string
+	RetryCount int
+}
+
+// 環境変数から設定を読み込む
+func loadConfig(logger *zap.Logger) (*config, error) {
+
+	// プロジェクトルートディレクトリを取得
+	rootDir := os.Getenv("PROJECT_ROOT")
+	if rootDir == "" {
+		return nil, fmt.Errorf("PROJECT_ROOT environment variable is not set")
 	}
 
-	// テストケース内で環境変数を設定
-	os.Setenv("MYSQL_USER", "root")
-	os.Setenv("MYSQL_PASSWORD", "password")
-	os.Setenv("MYSQL_DATABASE", "user_info")
-	os.Setenv("MYSQL_LOCAL_HOST", "localhost:3306")
+	// 環境変数ファイルのパス
+	envPath := filepath.Join(rootDir, "build", "db", "data", ".env")
 
-	//環境変数取得
-	user := os.Getenv("MYSQL_USER")
-	pw := os.Getenv("MYSQL_PASSWORD")
-	db_name := os.Getenv("MYSQL_DATABASE")
+	// 環境変数ファイルを読み込み
+	if err := godotenv.Load(envPath); err != nil {
+		logger.Warn("Failed to load .env file, using environment variables",
+			zap.String("path", envPath),
+			zap.Error(err))
+	}
 
-	var dbHost string
+	// 必須環境変数のチェック
+	requiredEnvVars := []string{"MYSQL_USER", "MYSQL_PASSWORD", "MYSQL_DATABASE"}
+	for _, envVar := range requiredEnvVars {
+		if os.Getenv(envVar) == "" {
+			return nil, fmt.Errorf("required environment variable is missing: %s", envVar)
+		}
+	}
+
+	// ホスト設定
+	dbHost := os.Getenv("MYSQL_LOCAL_HOST")
 	if os.Getenv("DOCKER_ENV") == "true" {
-		// Dockerコンテナ内での接続先を指定
 		dbHost = os.Getenv("MYSQL_DOCKER_HOST")
-	} else {
-		// ローカル環境での接続先を指定
-		dbHost = os.Getenv("MYSQL_LOCAL_HOST")
+		if dbHost == "" {
+			return nil, fmt.Errorf("DOCKER_ENV is true but MYSQL_DOCKER_HOST is not set")
+		}
 	}
-	// PATH設定
-	var path string = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=true", user, pw, dbHost, db_name)
-	dialector := mysql.Open(path)
 
-	//Db構造体に取得結果代入
-	db, err := gorm.Open(dialector, &gorm.Config{})
+	// リトライ回数設定
+	retryCountStr := os.Getenv("RETRYL_COUNT")
+	retryCount, err := strconv.Atoi(retryCountStr)
 	if err != nil {
-		log.Println("DBの接続に失敗しました。Path:", path)
-		connect(dialector, 5)
+		logger.Error("Invalid or missing RETRYL_COUNT value: %v, using default value", zap.Error(err))
+		retryCount = 5 // エラー時デフォルト値
 	}
-	return &DB{DB: db}
+
+	return &config{
+		User:       os.Getenv("MYSQL_USER"),
+		Password:   os.Getenv("MYSQL_PASSWORD"),
+		Host:       dbHost,
+		Database:   os.Getenv("MYSQL_DATABASE"),
+		RetryCount: retryCount,
+	}, nil
+}
+
+// NewDBManager はDBマネージャーを初期化する
+func NewDBManager(logger *zap.Logger) *DBManager {
+	if dbManager != nil {
+		return dbManager
+	}
+
+	dbManager = &DBManager{
+		db:     nil,
+		logger: logger,
+	}
+
+	return dbManager
+}
+
+// Connect はデータベースに接続する
+func (m *DBManager) Connect() error {
+	// 既に接続済みなら何もしない
+	if m.db != nil {
+		return nil
+	}
+	// 設定読み込み
+	config, err := loadConfig(m.logger)
+	if err != nil {
+		m.logger.Error("Failed to load configuration", zap.Error(err))
+		return err
+	}
+
+	// MySQL設定構造体を使用
+	cfg := mysqlDriver.Config{
+		User:                 config.User,
+		Passwd:               config.Password,
+		Net:                  "tcp",
+		Addr:                 config.Host,
+		DBName:               config.Database,
+		ParseTime:            true,
+		Collation:            "utf8mb4_general_ci",
+		AllowNativePasswords: true,
+		Loc:                  time.Local,
+	}
+
+	// DSN文字列を生成
+	dsn := cfg.FormatDSN()
+	dialector := mysql.Open(dsn)
+	db := connectWithRetry(dialector, config.RetryCount, m.logger)
+
+	if db == nil {
+		return fmt.Errorf("failed to connect to database")
+	}
+
+	m.db = db
+	return nil
 }
 
 // 接続リトライ処理
-func connect(dialector gorm.Dialector, count uint) (*DB, error) {
-	db, err := gorm.Open(dialector)
-	if err != nil {
-		if count > 1 {
-			time.Sleep(time.Second * 2)
-			count--
-			log.Printf("retry... connect to database count:%v\n", count)
-			connect(dialector, count)
+func connectWithRetry(dialector gorm.Dialector, maxRetries int, logger *zap.Logger) *gorm.DB {
+	var db *gorm.DB
+	var err error
+
+	for retries := 0; retries <= maxRetries; retries++ {
+		db, err = gorm.Open(dialector, &gorm.Config{})
+		// 接続成功
+		if err == nil {
+			logger.Info("Connected to database",
+				zap.String("dialect", dialector.Name()))
+			return db
 		}
-		log.Println("Failed to connect to database Error:", err.Error())
+
+		if retries < maxRetries {
+			retryDelay := time.Second * 2
+			logger.Info("Retrying database connection...",
+				zap.Int("attempt", retries+1),
+				zap.Int("maxRetries", maxRetries),
+				zap.Duration("delay", retryDelay))
+			time.Sleep(retryDelay)
+		} else {
+			logger.Error("Failed to connect to database after retries",
+				zap.Int("attempts", maxRetries+1),
+				zap.Error(err))
+		}
 	}
-	if db != nil && err != nil {
-		return &DB{DB: db}, nil
+	// すべてのリトライ失敗
+	logger.Error("Failed to connect to database after retries")
+	return nil
+}
+
+// GetDB はDB構造体を返す
+func (m *DBManager) GetDB() *DBManager {
+	if m.db == nil {
+		return nil
 	}
-	return nil, err
+	return &DBManager{db: m.db}
+}
+
+// IsConnected はDB接続状態を返す
+func (m *DBManager) IsClieintInstance() bool {
+	return m.db != nil
+}
+
+// CheckDBConnection DB接続状態をチェックします
+func (m *DBManager) CheckDBConnection() bool {
+
+	// DB接続を確認
+	sqlDB, err := m.db.DB()
+	if err != nil {
+		m.logger.Error("Failed to get database connection", zap.Error(err))
+		return false
+	}
+
+	if err := sqlDB.Ping(); err != nil {
+		m.logger.Error("Database ping failed", zap.Error(err))
+		return false
+	}
+	return true
 }

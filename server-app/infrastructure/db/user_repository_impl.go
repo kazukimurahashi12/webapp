@@ -4,14 +4,19 @@ import (
 	"github.com/kazukimurahashi12/webapp/domain"
 	"github.com/kazukimurahashi12/webapp/infrastructure/crypto"
 	"github.com/kazukimurahashi12/webapp/interface/repository"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 type userRepository struct {
-	db *DB
+	db     *gorm.DB
+	logger *zap.Logger
 }
 
-func NewUserRepository(db *DB) repository.UserRepository {
-	return &userRepository{db: db}
+func NewUserRepository(manager *DBManager) repository.UserRepository {
+	return &userRepository{
+		db:     manager.db,
+		logger: manager.logger}
 }
 
 // シーケンシャルIDによりユーザーを取得

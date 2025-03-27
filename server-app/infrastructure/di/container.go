@@ -1,11 +1,14 @@
 package di
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"go.uber.org/zap"
 
 	"github.com/kazukimurahashi12/webapp/infrastructure/db"
 	"github.com/kazukimurahashi12/webapp/infrastructure/redis"
-	"github.com/kazukimurahashi12/webapp/interface/controller/auth"
 	authController "github.com/kazukimurahashi12/webapp/interface/controller/auth"
 	blogController "github.com/kazukimurahashi12/webapp/interface/controller/blog"
 	"github.com/kazukimurahashi12/webapp/interface/controller/common"
@@ -22,7 +25,7 @@ type Container struct {
 	LoginController   *authController.LoginController
 	BlogController    *blogController.BlogController
 	SettingController *userController.SettingController
-	LogoutController  *auth.LogoutController
+	LogoutController  *authController.LogoutController
 	CommonController  *common.CommonController
 	SessionManager    session.SessionManager
 	logger            *zap.Logger
@@ -30,6 +33,19 @@ type Container struct {
 
 // DI依存性注入用のコンストラクタ
 func NewContainer() *Container {
+	// プロジェクトルートディレクトリを取得
+	currentDir, err := os.Getwd()
+	if err != nil {
+		panic(fmt.Errorf("failed to get working directory: %w", err))
+	}
+
+	// プロジェクトルートディレクトリを移動して取得
+	rootDir := filepath.Dir(filepath.Dir(currentDir))
+	// PROJECT_ROOT環境変数を設定
+	if err := os.Setenv("PROJECT_ROOT", rootDir); err != nil {
+		panic(fmt.Errorf("failed to set PROJECT_ROOT environment variable: %w", err))
+	}
+
 	// Zapロガー初期化
 	logger, err := zap.NewProduction()
 	if err != nil {
@@ -39,12 +55,25 @@ func NewContainer() *Container {
 	// セッションストア初期化
 	ss := redis.NewRedisSessionStore()
 
-	// DBClient初期化
-	dbClient := db.NewDB()
+	// DBManager初期化
+	dbManager := db.NewDBManager(logger)
+	if err := dbManager.Connect(); err != nil {
+		logger.Error("Failed to connect to database", zap.Error(err))
+		os.Exit(1)
+	}
+	// DB接続が成功したか確認
+	if !dbManager.IsClieintInstance() {
+		logger.Error("Database client non-instance")
+		os.Exit(1)
+	}
+	if !dbManager.CheckDBConnection() {
+		logger.Error("Database connection failed")
+		os.Exit(1)
+	}
 
 	// Repository初期化
-	blogRepo := db.NewBlogRepository(dbClient)
-	userRepo := db.NewUserRepository(dbClient)
+	blogRepo := db.NewBlogRepository(dbManager)
+	userRepo := db.NewUserRepository(dbManager)
 
 	// UseCase初期化
 	blogUC := blogUseCase.NewBlogUseCase(blogRepo, userRepo)
@@ -57,7 +86,7 @@ func NewContainer() *Container {
 		LoginController:   authController.NewLoginController(authUC, ss, logger),
 		BlogController:    blogController.NewBlogController(blogUC, ss, logger),
 		SettingController: userController.NewSettingController(userUC, ss, logger),
-		LogoutController:  auth.NewLogoutController(authUC, ss, logger),
+		LogoutController:  authController.NewLogoutController(authUC, ss, logger),
 		CommonController:  common.NewCommonController(ss, logger),
 		SessionManager:    ss,
 		logger:            logger,

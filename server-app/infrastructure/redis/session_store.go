@@ -8,6 +8,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+
+	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -27,12 +30,31 @@ type RedisSessionStore struct {
 
 // RedisClientインスタン作成
 func NewRedisSessionStore() *RedisSessionStore {
-	//環境変数設定
-	//main.goからの相対パス指定
-	envErr := godotenv.Load("./build/db/data/.env")
-	if envErr != nil {
-		log.Println("Error loading .env file", envErr)
+	// Zapロガー初期化
+	logger, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
 	}
+
+	//環境変数設定
+	// プロジェクトルートディレクトリを取得
+	rootDir := os.Getenv("PROJECT_ROOT")
+	if rootDir == "" {
+		logger.Error("PROJECT_ROOT environment variable is not set")
+		return &RedisSessionStore{conn: nil}
+	}
+
+	// 環境変数ファイルのパス
+	envPath := filepath.Join(rootDir, "build", "db", "data", ".env")
+
+	// 環境変数ファイルを読み込み
+	if err := godotenv.Load(envPath); err != nil {
+		logger.Error("Failed to load .env file",
+			zap.String("path", envPath),
+			zap.Error(err))
+		return &RedisSessionStore{conn: nil}
+	}
+
 	var dbHost string
 	if os.Getenv("DOCKER_ENV") == "true" {
 		// Dockerコンテナ内での接続先を指定

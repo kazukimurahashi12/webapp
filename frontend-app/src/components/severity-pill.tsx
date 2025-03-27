@@ -7,6 +7,7 @@ interface SeverityPillProps {
   };
 }
 
+// CSS設定in JS
 const SeverityPillRoot = styled("span")<SeverityPillProps>(({ theme, ownerState }) => {
   const backgroundColor = theme.palette[ownerState.color].alpha12;
   const color = theme.palette.mode === 'dark'

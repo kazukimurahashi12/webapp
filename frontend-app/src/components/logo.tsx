@@ -4,6 +4,7 @@ export const Logo = () => {
   const theme = useTheme();
   const fillColor = theme.palette.primary.main;
 
+  //SVG設定
   return (
     <svg
       fill="none"

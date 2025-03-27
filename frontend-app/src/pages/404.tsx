@@ -56,7 +56,7 @@ const Page = () => (
             variant="body1"
           >
             You either tried some shady route or you came here by mistake.
-            (恐らく、不正なルートを試みたか、間違ってここに遷移した可能性があります。)
+            (不正なルートを試みたか、誤った遷移した可能性があります。)
           </Typography>
           <Button
             component={NextLink}

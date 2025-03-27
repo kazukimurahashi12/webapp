@@ -14,6 +14,8 @@ type Blog = {
     blog: Blog;
   };
   
+
+//TODO 必要であれば再度実装
 // export const getServerSideProps: GetServerSideProps<BlogProps> = async (context) => {
   
 //     const response = await axios.get("http://localhost:8080/", {

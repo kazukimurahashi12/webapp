@@ -11,8 +11,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 400) {
-      const errorMessage = error.response.data.message; // エラーメッセージはサーバー側のレスポンスによって異なる場合があります
-      ToastNotification({ message: errorMessage }); // トーストを表示
+      // エラーメッセージを取得
+      const errorMessage = error.response.data.message; 
+      // トーストを表示
+      ToastNotification({ message: errorMessage }); 
     }
     return Promise.reject(error);
   }

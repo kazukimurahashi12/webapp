@@ -1,7 +1,12 @@
 package main
 
 import (
+	"context"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/kazukimurahashi12/webapp/interface/controller"
 	"go.uber.org/zap"
@@ -32,16 +37,49 @@ func main() {
 			_ = logger.Sync()
 		}
 	}()
-
+	//起動中ログ出力
 	logger.Info("Starting application...")
 
 	// ルーター初期化
 	router := controller.GetRouter()
 
-	// サーバー起動
-	logger.Info("Server listening on port 8080")
-	if err := router.Run(":8080"); err != nil {
-		logger.Error(ErrServerStartFailed, zap.Error(err))
-		os.Exit(1)
+	// ポート設定
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
+	serverAddr := ":" + port
+
+	// HTTPサーバーの作成
+	srv := &http.Server{
+		Addr:    serverAddr,
+		Handler: router,
+	}
+
+	// シグナル処理のためのチャネル
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	// 別のゴルーチンでサーバーを起動
+	go func() {
+		logger.Info("Server listening on port " + port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatal("Server startup failed", zap.Error(err))
+		}
+	}()
+
+	// シグナル待機
+	<-quit
+	logger.Info("Shutting down server...")
+
+	// コンテキストタイムアウト設定
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// サーバーの正常終了
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Fatal("Server forced to shutdown", zap.Error(err))
+	}
+
+	logger.Info("Server exiting")
 }

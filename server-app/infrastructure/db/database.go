@@ -21,11 +21,6 @@ type DBManager struct {
 	logger *zap.Logger
 }
 
-// // DB構造体
-// type DB struct {
-// 	*gorm.DB
-// }
-
 // シングルトンインスタンス
 var dbManager *DBManager
 
@@ -92,7 +87,7 @@ func loadConfig(logger *zap.Logger) (*config, error) {
 	}, nil
 }
 
-// NewDBManager はDBマネージャーを初期化する
+// DBマネージャーを初期化
 func NewDBManager(logger *zap.Logger) *DBManager {
 	if dbManager != nil {
 		return dbManager
@@ -106,7 +101,7 @@ func NewDBManager(logger *zap.Logger) *DBManager {
 	return dbManager
 }
 
-// Connect はデータベースに接続する
+// データベース接続
 func (m *DBManager) Connect() error {
 	// 既に接続済みなら何もしない
 	if m.db != nil {
@@ -177,7 +172,7 @@ func connectWithRetry(dialector gorm.Dialector, maxRetries int, logger *zap.Logg
 	return nil
 }
 
-// GetDB はDB構造体を返す
+// DB構造体返却
 func (m *DBManager) GetDB() *DBManager {
 	if m.db == nil {
 		return nil
@@ -185,12 +180,12 @@ func (m *DBManager) GetDB() *DBManager {
 	return &DBManager{db: m.db}
 }
 
-// IsConnected はDB接続状態を返す
+// DB接続状態返却
 func (m *DBManager) IsClieintInstance() bool {
 	return m.db != nil
 }
 
-// CheckDBConnection DB接続状態をチェックします
+// DB接続状態チェック
 func (m *DBManager) CheckDBConnection() bool {
 
 	// DB接続を確認

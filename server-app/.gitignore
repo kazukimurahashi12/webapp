@@ -7,6 +7,7 @@ localhost.key
 
 # testing
 /coverage
+coverage.out
 
 # production
 dump.rdb

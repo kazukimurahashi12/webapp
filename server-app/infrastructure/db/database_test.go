@@ -47,7 +47,7 @@ func setupMockDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock, *zap.Logger) {
 	return db, mock, logger
 }
 
-// godotenvMock wraps the godotenv package for mocking
+// DBManager構造体のメソッドをモック化するための構造体
 type godotenvMock struct {
 	originalLoad func(...string) error
 	mockLoad     func(...string) error
@@ -65,7 +65,7 @@ var godotenvMockInstance = &godotenvMock{
 	mockLoad:     func(filenames ...string) error { return nil },
 }
 
-// connectWithRetryMock manages mocking of the connectWithRetry function
+// connectWithRetry関数をモック化するための構造体
 type connectWithRetryMock struct {
 	originalFunc func(gorm.Dialector, int, *zap.Logger) *gorm.DB
 	mockFunc     func(gorm.Dialector, int, *zap.Logger) *gorm.DB
@@ -82,7 +82,7 @@ var connectWithRetryMockInstance = &connectWithRetryMock{
 	originalFunc: connectWithRetry,
 }
 
-// mockGodotenv enables/disables the godotenv mock
+// mockGodotenvモック化のための関数
 func mockGodotenv(enabled bool) {
 	if enabled {
 		godotenvMockInstance.mockLoad = func(filenames ...string) error { return nil }
@@ -91,7 +91,7 @@ func mockGodotenv(enabled bool) {
 	}
 }
 
-// mockConnectWithRetry sets up the mock for connectWithRetry
+// mockConnectWithRetryモック化のための関数
 func mockConnectWithRetry(db *gorm.DB, success bool) {
 	if success {
 		connectWithRetryMockInstance.mockFunc = func(dialector gorm.Dialector, maxRetries int, logger *zap.Logger) *gorm.DB {
@@ -104,12 +104,12 @@ func mockConnectWithRetry(db *gorm.DB, success bool) {
 	}
 }
 
-// resetConnectWithRetry resets the mock
+// resetConnectWithRetryモック化のための関数
 func resetConnectWithRetry() {
 	connectWithRetryMockInstance.mockFunc = nil
 }
 
-// IsClientInstance checks if DB connection exists
+// DBManagerインスタンスの判定
 func (m *DBManager) IsClientInstance() bool {
 	return m.db != nil
 }

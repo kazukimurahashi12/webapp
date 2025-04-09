@@ -1,3 +1,6 @@
+# github.com/DATA-DOG/go-sqlmock v1.5.2
+## explicit; go 1.15
+github.com/DATA-DOG/go-sqlmock
 # github.com/bytedance/sonic v1.9.1
 ## explicit; go 1.15
 github.com/bytedance/sonic
@@ -136,6 +139,7 @@ github.com/stretchr/objx
 ## explicit; go 1.20
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
+github.com/stretchr/testify/require
 # github.com/twitchyliquid64/golang-asm v0.15.1
 ## explicit; go 1.13
 github.com/twitchyliquid64/golang-asm/asm/arch
@@ -171,7 +175,9 @@ go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/pool
 go.uber.org/zap/internal/stacktrace
+go.uber.org/zap/internal/ztest
 go.uber.org/zap/zapcore
+go.uber.org/zap/zaptest
 # golang.org/x/arch v0.3.0
 ## explicit; go 1.17
 golang.org/x/arch/x86/x86asm

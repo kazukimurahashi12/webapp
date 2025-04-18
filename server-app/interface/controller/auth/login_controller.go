@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kazukimurahashi12/webapp/domain"
+	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	"github.com/kazukimurahashi12/webapp/usecase/auth"
 	"github.com/kazukimurahashi12/webapp/usecase/validator"
@@ -61,7 +61,7 @@ func (l *LoginController) GetLogin(c *gin.Context) {
 
 // ログイン処理
 func (l *LoginController) PostLogin(c *gin.Context) {
-	var loginUser domain.FormUser
+	var loginUser domainUser.FormUser
 	if err := c.ShouldBindJSON(&loginUser); err != nil {
 		err := validator.ValidationCheck(c, err)
 		if err != nil {
@@ -75,7 +75,7 @@ func (l *LoginController) PostLogin(c *gin.Context) {
 	}
 
 	// ユーザー認証
-	user, err := l.authUseCase.Authenticate(loginUser.UserId, loginUser.Password)
+	user, err := l.authUseCase.Authenticate(loginUser.UserID, loginUser.Password)
 	if err != nil {
 		l.logger.Error("Failed to Authorize", zap.Error(err))
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -86,8 +86,8 @@ func (l *LoginController) PostLogin(c *gin.Context) {
 	}
 
 	// セッション作成
-	if err := l.sessionManager.CreateSession(user.UserId); err != nil {
-		l.logger.Error("Failed to create session", zap.String("userID", user.UserId), zap.Error(err))
+	if err := l.sessionManager.CreateSession(user.UserID); err != nil {
+		l.logger.Error("Failed to create session", zap.String("userID", user.UserID), zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "セッションの作成に失敗しました",
 			"code":  "SESSION_CREATION_FAILED",

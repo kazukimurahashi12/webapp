@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kazukimurahashi12/webapp/domain"
+	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	"github.com/kazukimurahashi12/webapp/usecase/user"
 	"github.com/kazukimurahashi12/webapp/usecase/validator"
@@ -28,12 +28,12 @@ func NewRegistController(userUseCase user.UseCase, sessionManager session.Sessio
 // 新規会員登録
 func (r *RegistController) Regist(c *gin.Context) {
 	// JSON形式のリクエストボディを構造体にバインドする
-	registUser := domain.FormUser{}
+	registUser := domainUser.FormUser{}
 	if err := c.ShouldBindJSON(&registUser); err != nil {
 		// バリデーションチェックを実行
 		err := validator.ValidationCheck(c, err)
 		if err != nil {
-			r.logger.Error("Failed to bind JSON request", zap.String("userId", registUser.UserId), zap.Error(err))
+			r.logger.Error("Failed to bind JSON request", zap.String("userId", registUser.UserID), zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "リクエスト形式が不正です",
 				"code":  "INVALID_REQUEST_FORMAT",
@@ -45,7 +45,7 @@ func (r *RegistController) Regist(c *gin.Context) {
 	// 会員情報登録処理UseCase
 	createdUser, err := r.userUseCase.CreateUser(&registUser)
 	if err != nil {
-		r.logger.Error("Failed to register user", zap.String("userId", registUser.UserId), zap.Error(err))
+		r.logger.Error("Failed to register user", zap.String("userId", registUser.UserID), zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "ユーザー登録に失敗しました",
 			"code":  "USER_REGISTRATION_FAILED",

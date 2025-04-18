@@ -1,9 +1,9 @@
 package user
 
-import "github.com/kazukimurahashi12/webapp/domain"
+import domainUser "github.com/kazukimurahashi12/webapp/domain/user"
 
 type UseCase interface {
-	UpdateUserID(oldID, newID string) (*domain.User, error)
-	UpdateUserPassword(userID, currentPassword, newPassword string) (*domain.User, error)
-	CreateUser(user *domain.FormUser) (*domain.User, error)
+	UpdateUserID(oldID, newID string) (*domainUser.User, error)
+	UpdateUserPassword(userID, currentPassword, newPassword string) (*domainUser.User, error)
+	CreateUser(user *domainUser.FormUser) (*domainUser.User, error)
 }

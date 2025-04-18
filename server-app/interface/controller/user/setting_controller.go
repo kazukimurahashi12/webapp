@@ -4,19 +4,19 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kazukimurahashi12/webapp/domain"
+	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
 	"github.com/kazukimurahashi12/webapp/interface/session"
-	"github.com/kazukimurahashi12/webapp/usecase/user"
+	usecaseUser "github.com/kazukimurahashi12/webapp/usecase/user"
 	"go.uber.org/zap"
 )
 
 type SettingController struct {
-	userUseCase    user.UseCase
+	userUseCase    usecaseUser.UseCase
 	sessionManager session.SessionManager
 	logger         *zap.Logger
 }
 
-func NewSettingController(userUseCase user.UseCase, sessionManager session.SessionManager, logger *zap.Logger) *SettingController {
+func NewSettingController(userUseCase usecaseUser.UseCase, sessionManager session.SessionManager, logger *zap.Logger) *SettingController {
 	return &SettingController{
 		userUseCase:    userUseCase,
 		sessionManager: sessionManager,
@@ -26,7 +26,7 @@ func NewSettingController(userUseCase user.UseCase, sessionManager session.Sessi
 
 // 会員情報編集(id)
 func (s *SettingController) UpdateID(c *gin.Context) {
-	var userUpdate domain.UserIdChange
+	var userUpdate domainUser.UserIdChange
 	if err := c.ShouldBindJSON(&userUpdate); err != nil {
 		s.logger.Error("Failed to bind JSON", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -37,7 +37,7 @@ func (s *SettingController) UpdateID(c *gin.Context) {
 	}
 
 	// UpdateUserID処理UseCase
-	updatedUser, err := s.userUseCase.UpdateUserID(userUpdate.ChangeId, userUpdate.NowId)
+	updatedUser, err := s.userUseCase.UpdateUserID(userUpdate.ChangeID, userUpdate.NowID)
 	if err != nil {
 		s.logger.Error("Failed to update user ID", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -48,7 +48,7 @@ func (s *SettingController) UpdateID(c *gin.Context) {
 	}
 
 	//redisでセッション破棄、新IDでセッション作成
-	if err := s.sessionManager.UpdateSession(c, userUpdate.ChangeId, userUpdate.NowId); err != nil {
+	if err := s.sessionManager.UpdateSession(c, userUpdate.ChangeID, userUpdate.NowID); err != nil {
 		s.logger.Error("Failed to update session", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "セッションの更新に失敗しました",
@@ -57,7 +57,7 @@ func (s *SettingController) UpdateID(c *gin.Context) {
 		return
 	}
 
-	s.logger.Info("Successfully changed user ID", zap.String("newUserId", userUpdate.ChangeId))
+	s.logger.Info("Successfully changed user ID", zap.String("newUserId", userUpdate.ChangeID))
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ユーザーIDを更新しました",
 		"code":    "USER_ID_UPDATED",
@@ -67,7 +67,7 @@ func (s *SettingController) UpdateID(c *gin.Context) {
 
 // 会員情報編集(password)
 func (s *SettingController) UpdatePassword(c *gin.Context) {
-	var passwordUpdate domain.UserPwChange
+	var passwordUpdate domainUser.UserPwChange
 	if err := c.ShouldBindJSON(&passwordUpdate); err != nil {
 		s.logger.Error("Failed to bind JSON", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -80,7 +80,7 @@ func (s *SettingController) UpdatePassword(c *gin.Context) {
 
 	// UpdateUserPassword処理UseCase
 	updatedUser, err := s.userUseCase.UpdateUserPassword(
-		passwordUpdate.UserId,
+		passwordUpdate.UserID,
 		passwordUpdate.NowPassword,
 		passwordUpdate.ChangePassword,
 	)
@@ -104,7 +104,7 @@ func (s *SettingController) UpdatePassword(c *gin.Context) {
 	}
 
 	//RedisよりセッションとCookieにUserIdを新しく登録
-	if err := s.sessionManager.CreateSession(updatedUser.UserId); err != nil {
+	if err := s.sessionManager.CreateSession(updatedUser.UserID); err != nil {
 		s.logger.Error("Failed to create new session", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "セッションの作成に失敗しました",

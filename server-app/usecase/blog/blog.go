@@ -1,13 +1,16 @@
 package blog
 
-import "github.com/kazukimurahashi12/webapp/domain"
+import (
+	domainBlog "github.com/kazukimurahashi12/webapp/domain/blog"
+	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
+)
 
 type UseCase interface {
-	NewCreateBlog(blog *domain.BlogPost) (*domain.BlogPost, error)
-	GetBlogsByUserID(userID string) ([]domain.Blog, error)
-	GetUserByID(userID string) (*domain.User, error)
+	NewCreateBlog(blog *domainBlog.BlogPost) (*domainBlog.BlogPost, error)
+	GetBlogsByUserID(userID string) ([]domainBlog.Blog, error)
+	GetUserByID(userID string) (*domainUser.User, error)
 	DeleteBlog(id string) error
-	UpdateBlog(blog *domain.BlogPost) (*domain.BlogPost, error)
-	GetBlogByID(id string) (*domain.Blog, error)
-	NewCreateUser(user *domain.FormUser) (*domain.User, error)
+	UpdateBlog(blog *domainBlog.BlogPost) (*domainBlog.BlogPost, error)
+	GetBlogByID(id string) (*domainBlog.Blog, error)
+	NewCreateUser(user *domainUser.FormUser) (*domainUser.User, error)
 }

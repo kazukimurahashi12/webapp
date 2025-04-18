@@ -17,8 +17,8 @@ import (
 
 // DBマネージャー構造体
 type DBManager struct {
-	db     *gorm.DB
-	logger *zap.Logger
+	DB     *gorm.DB
+	Logger *zap.Logger
 }
 
 // シングルトンインスタンス
@@ -94,8 +94,8 @@ func NewDBManager(logger *zap.Logger) *DBManager {
 	}
 
 	dbManager = &DBManager{
-		db:     nil,
-		logger: logger,
+		DB:     nil,
+		Logger: logger,
 	}
 
 	return dbManager
@@ -104,13 +104,13 @@ func NewDBManager(logger *zap.Logger) *DBManager {
 // データベース接続
 func (m *DBManager) Connect() error {
 	// 既に接続済みなら何もしない
-	if m.db != nil {
+	if m.DB != nil {
 		return nil
 	}
 	// 設定読み込み
-	config, err := loadConfig(m.logger)
+	config, err := loadConfig(m.Logger)
 	if err != nil {
-		m.logger.Error("Failed to load configuration", zap.Error(err))
+		m.Logger.Error("Failed to load configuration", zap.Error(err))
 		return err
 	}
 
@@ -130,13 +130,15 @@ func (m *DBManager) Connect() error {
 	// DSN文字列を生成
 	dsn := cfg.FormatDSN()
 	dialector := mysql.Open(dsn)
-	db := connectWithRetry(dialector, config.RetryCount, m.logger)
+	db := connectWithRetry(dialector, config.RetryCount, m.Logger)
 
 	if db == nil {
 		return fmt.Errorf("failed to connect to database")
 	}
 
-	m.db = db
+	// DB接続を保持
+	m.DB = db
+
 	return nil
 }
 
@@ -174,29 +176,29 @@ func connectWithRetry(dialector gorm.Dialector, maxRetries int, logger *zap.Logg
 
 // DB構造体返却
 func (m *DBManager) GetDB() *DBManager {
-	if m.db == nil {
+	if m.DB == nil {
 		return nil
 	}
-	return &DBManager{db: m.db}
+	return &DBManager{DB: m.DB}
 }
 
 // DB接続状態返却
 func (m *DBManager) IsClieintInstance() bool {
-	return m.db != nil
+	return m.DB != nil
 }
 
 // DB接続状態チェック
 func (m *DBManager) CheckDBConnection() bool {
 
 	// DB接続を確認
-	sqlDB, err := m.db.DB()
+	sqlDB, err := m.DB.DB()
 	if err != nil {
-		m.logger.Error("Failed to get database connection", zap.Error(err))
+		m.Logger.Error("Failed to get database connection", zap.Error(err))
 		return false
 	}
 
 	if err := sqlDB.Ping(); err != nil {
-		m.logger.Error("Database ping failed", zap.Error(err))
+		m.Logger.Error("Database ping failed", zap.Error(err))
 		return false
 	}
 	return true

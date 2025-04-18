@@ -1,26 +1,25 @@
 package user
 
 import (
-	"github.com/kazukimurahashi12/webapp/domain"
+	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
 	"github.com/kazukimurahashi12/webapp/infrastructure/crypto"
-	"github.com/kazukimurahashi12/webapp/interface/repository"
 )
 
 type userUseCase struct {
-	userRepo repository.UserRepository
+	userRepo domainUser.UserRepository
 }
 
-func NewUserUseCase(userRepo repository.UserRepository) UseCase {
+func NewUserUseCase(userRepo domainUser.UserRepository) UseCase {
 	return &userUseCase{
 		userRepo: userRepo,
 	}
 }
 
-func (u *userUseCase) UpdateUserID(oldID, newID string) (*domain.User, error) {
+func (u *userUseCase) UpdateUserID(oldID, newID string) (*domainUser.User, error) {
 	return u.userRepo.UpdateID(oldID, newID)
 }
 
-func (u *userUseCase) UpdateUserPassword(userID, currentPassword, newPassword string) (*domain.User, error) {
+func (u *userUseCase) UpdateUserPassword(userID, currentPassword, newPassword string) (*domainUser.User, error) {
 	// 現在のパスワードを検証
 	user, err := u.userRepo.FindByUserID(userID)
 	if err != nil {
@@ -35,7 +34,7 @@ func (u *userUseCase) UpdateUserPassword(userID, currentPassword, newPassword st
 	return u.userRepo.UpdatePassword(userID, newPassword)
 }
 
-func (u *userUseCase) CreateUser(user *domain.FormUser) (*domain.User, error) {
+func (u *userUseCase) CreateUser(user *domainUser.FormUser) (*domainUser.User, error) {
 	// パスワードをハッシュ化
 	crypto := crypto.NewBcryptCrypto()
 	hashedPassword, err := crypto.Encrypt(user.Password)
@@ -44,8 +43,8 @@ func (u *userUseCase) CreateUser(user *domain.FormUser) (*domain.User, error) {
 	}
 
 	// 新しいユーザーを作成
-	newUser := &domain.User{
-		UserId:   user.UserId,
+	newUser := &domainUser.User{
+		UserID:   user.UserID,
 		Password: hashedPassword,
 	}
 

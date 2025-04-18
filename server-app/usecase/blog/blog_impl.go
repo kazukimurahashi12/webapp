@@ -3,34 +3,34 @@ package blog
 import (
 	"strconv"
 
-	"github.com/kazukimurahashi12/webapp/domain"
-	"github.com/kazukimurahashi12/webapp/interface/repository"
+	domainBlog "github.com/kazukimurahashi12/webapp/domain/blog"
+	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
 )
 
 type blogUseCase struct {
-	blogRepo repository.BlogRepository
-	userRepo repository.UserRepository
+	blogRepo domainBlog.BlogRepository
+	userRepo domainUser.UserRepository
 }
 
-func NewBlogUseCase(blogRepo repository.BlogRepository, userRepo repository.UserRepository) UseCase {
+func NewBlogUseCase(blogRepo domainBlog.BlogRepository, userRepo domainUser.UserRepository) UseCase {
 	return &blogUseCase{
 		blogRepo: blogRepo,
 		userRepo: userRepo,
 	}
 }
 
-func (b *blogUseCase) NewCreateBlog(blog *domain.BlogPost) (*domain.BlogPost, error) {
+func (b *blogUseCase) NewCreateBlog(blog *domainBlog.BlogPost) (*domainBlog.BlogPost, error) {
 	err := b.blogRepo.Create(blog)
 	if err != nil {
 		return nil, err
 	}
 	return blog, nil
 }
-func (b *blogUseCase) GetBlogsByUserID(userID string) ([]domain.Blog, error) {
+func (b *blogUseCase) GetBlogsByUserID(userID string) ([]domainBlog.Blog, error) {
 	return b.blogRepo.FindByUserID(userID)
 }
 
-func (b *blogUseCase) GetUserByID(userID string) (*domain.User, error) {
+func (b *blogUseCase) GetUserByID(userID string) (*domainUser.User, error) {
 	return b.userRepo.FindByID(userID)
 }
 
@@ -38,16 +38,16 @@ func (b *blogUseCase) DeleteBlog(id string) error {
 	return b.blogRepo.Delete(id)
 }
 
-func (b *blogUseCase) UpdateBlog(blogPost *domain.BlogPost) (*domain.BlogPost, error) {
+func (b *blogUseCase) UpdateBlog(blogPost *domainBlog.BlogPost) (*domainBlog.BlogPost, error) {
 	// stringからuintに変換
-	id, err := strconv.ParseUint(blogPost.Id, 10, 64)
+	id, err := strconv.ParseUint(blogPost.ID, 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	blog := &domain.Blog{
-		Id:      uint(id),
-		LoginId: blogPost.LoginId,
+	blog := &domainBlog.Blog{
+		ID:      uint(id),
+		LoginID: blogPost.LoginID,
 		Title:   blogPost.Title,
 		Content: blogPost.Content,
 	}
@@ -57,18 +57,18 @@ func (b *blogUseCase) UpdateBlog(blogPost *domain.BlogPost) (*domain.BlogPost, e
 		return nil, updateErr
 	}
 
-	return &domain.BlogPost{
-		Id:      strconv.FormatUint(uint64(blog.Id), 10),
-		LoginId: blog.LoginId,
+	return &domainBlog.BlogPost{
+		ID:      strconv.FormatUint(uint64(blog.ID), 10),
+		LoginID: blog.LoginID,
 		Title:   blog.Title,
 		Content: blog.Content,
 	}, nil
 }
 
-func (b *blogUseCase) NewCreateUser(user *domain.FormUser) (*domain.User, error) {
+func (b *blogUseCase) NewCreateUser(user *domainUser.FormUser) (*domainUser.User, error) {
 	// FormUserをUserに変換
-	newUser := &domain.User{
-		UserId:   user.UserId,
+	newUser := &domainUser.User{
+		UserID:   user.UserID,
 		Password: user.Password,
 	}
 
@@ -81,7 +81,7 @@ func (b *blogUseCase) NewCreateUser(user *domain.FormUser) (*domain.User, error)
 	return newUser, nil
 }
 
-func (b *blogUseCase) GetBlogByID(id string) (*domain.Blog, error) {
+func (b *blogUseCase) GetBlogByID(id string) (*domainBlog.Blog, error) {
 	blog, err := b.blogRepo.FindByID(id)
 	if err != nil {
 		return nil, err

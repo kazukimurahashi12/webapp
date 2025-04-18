@@ -1,8 +1,8 @@
 package auth
 
-import "github.com/kazukimurahashi12/webapp/domain"
+import domainUser "github.com/kazukimurahashi12/webapp/domain/user"
 
 type UseCase interface {
-	Authenticate(userID, password string) (*domain.User, error)
-	GetUserByID(userID string) (*domain.User, error)
+	Authenticate(userID, password string) (*domainUser.User, error)
+	GetUserByID(userID string) (*domainUser.User, error)
 }

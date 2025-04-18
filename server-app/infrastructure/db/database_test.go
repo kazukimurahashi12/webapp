@@ -111,7 +111,7 @@ func resetConnectWithRetry() {
 
 // DBManagerインスタンスの判定
 func (m *DBManager) IsClientInstance() bool {
-	return m.db != nil
+	return m.DB != nil
 }
 
 // NewDBManagerのテスト
@@ -127,8 +127,8 @@ func TestNewDBManager(t *testing.T) {
 
 		// Assert ---
 		assert.NotNil(t, manager)
-		assert.Nil(t, manager.db)
-		assert.Equal(t, logger, manager.logger)
+		assert.Nil(t, manager.DB)
+		assert.Equal(t, logger, manager.Logger)
 	})
 
 	t.Run("AlreadyInitialized", func(t *testing.T) {
@@ -445,7 +445,7 @@ func TestConnect(t *testing.T) {
 
 		// DBManagerインスタンスを作成
 		manager := &DBManager{
-			logger: logger,
+			Logger: logger,
 		}
 
 		// Act ---
@@ -453,7 +453,7 @@ func TestConnect(t *testing.T) {
 
 		// Assert ---
 		assert.NoError(t, err)
-		assert.NotNil(t, manager.db)
+		assert.NotNil(t, manager.DB)
 	})
 
 	t.Run("既に接続済みの場合", func(t *testing.T) {
@@ -494,8 +494,8 @@ func TestConnect(t *testing.T) {
 
 		// DBManagerインスタンスを作成
 		manager := &DBManager{
-			logger: logger,
-			db:     db, // 既に接続済み
+			Logger: logger,
+			DB:     db, // 既に接続済み
 		}
 
 		// Act ---
@@ -503,7 +503,7 @@ func TestConnect(t *testing.T) {
 
 		// Assert ---
 		assert.NoError(t, err)
-		assert.NotNil(t, manager.db)
+		assert.NotNil(t, manager.DB)
 	})
 
 	t.Run("設定読み込みエラー", func(t *testing.T) {
@@ -539,7 +539,7 @@ func TestConnect(t *testing.T) {
 
 		// DBManagerインスタンスを作成
 		manager := &DBManager{
-			logger: logger,
+			Logger: logger,
 		}
 
 		// Act ---
@@ -588,7 +588,7 @@ func TestConnect(t *testing.T) {
 
 		// DBManagerインスタンスを作成
 		manager := &DBManager{
-			logger: logger,
+			Logger: logger,
 		}
 
 		// Act ---
@@ -656,8 +656,8 @@ func TestGetDB(t *testing.T) {
 		db, _, _ := setupMockDB(t)
 
 		manager := &DBManager{
-			logger: logger,
-			db:     db,
+			Logger: logger,
+			DB:     db,
 		}
 
 		// Act ---
@@ -665,7 +665,7 @@ func TestGetDB(t *testing.T) {
 
 		// Assert ---
 		assert.NotNil(t, result)
-		assert.NotNil(t, result.db)
+		assert.NotNil(t, result.DB)
 	})
 
 	t.Run("DB接続がない場合", func(t *testing.T) {
@@ -673,8 +673,8 @@ func TestGetDB(t *testing.T) {
 		logger := zaptest.NewLogger(t)
 
 		manager := &DBManager{
-			logger: logger,
-			db:     nil,
+			Logger: logger,
+			DB:     nil,
 		}
 
 		// Act ---
@@ -693,8 +693,8 @@ func TestIsClientInstance(t *testing.T) {
 		db, _, _ := setupMockDB(t)
 
 		manager := &DBManager{
-			logger: logger,
-			db:     db,
+			Logger: logger,
+			DB:     db,
 		}
 
 		// Act ---
@@ -709,8 +709,8 @@ func TestIsClientInstance(t *testing.T) {
 		logger := zaptest.NewLogger(t)
 
 		manager := &DBManager{
-			logger: logger,
-			db:     nil,
+			Logger: logger,
+			DB:     nil,
 		}
 
 		// Act ---
@@ -740,8 +740,8 @@ func TestCheckDBConnection(t *testing.T) {
 		require.NoError(t, err)
 
 		manager := &DBManager{
-			db:     gormDB,
-			logger: logger,
+			DB:     gormDB,
+			Logger: logger,
 		}
 
 		// Act ---
@@ -769,8 +769,8 @@ func TestCheckDBConnection(t *testing.T) {
 		require.NoError(t, err)
 
 		manager := &DBManager{
-			db:     gormDB,
-			logger: logger,
+			DB:     gormDB,
+			Logger: logger,
 		}
 
 		// Act ---

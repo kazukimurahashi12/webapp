@@ -9,6 +9,7 @@ import (
 
 	"github.com/kazukimurahashi12/webapp/infrastructure/db"
 	"github.com/kazukimurahashi12/webapp/infrastructure/redis"
+	"github.com/kazukimurahashi12/webapp/infrastructure/repository"
 	authController "github.com/kazukimurahashi12/webapp/interface/controller/auth"
 	blogController "github.com/kazukimurahashi12/webapp/interface/controller/blog"
 	"github.com/kazukimurahashi12/webapp/interface/controller/common"
@@ -72,8 +73,8 @@ func NewContainer() *Container {
 	}
 
 	// Repository初期化
-	blogRepo := db.NewBlogRepository(dbManager)
-	userRepo := db.NewUserRepository(dbManager)
+	blogRepo := repository.NewBlogRepository(dbManager)
+	userRepo := repository.NewUserRepository(dbManager)
 
 	// UseCase初期化
 	blogUC := blogUseCase.NewBlogUseCase(blogRepo, userRepo)

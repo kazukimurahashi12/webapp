@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kazukimurahashi12/webapp/domain"
+	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	"github.com/kazukimurahashi12/webapp/usecase/auth"
 	"go.uber.org/zap"
@@ -30,7 +30,7 @@ func NewLogoutController(authUseCase auth.UseCase, sessionManager session.Sessio
 
 // ログアウト処理
 func (l *LogoutController) DecideLogout(c *gin.Context) {
-	var logoutUser domain.FormUser
+	var logoutUser domainUser.FormUser
 	if err := c.ShouldBindJSON(&logoutUser); err != nil {
 		l.logger.Error("Failed to bind JSON", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -41,7 +41,7 @@ func (l *LogoutController) DecideLogout(c *gin.Context) {
 	}
 
 	// UseCaseユーザー認証
-	user, err := l.authUseCase.Authenticate(logoutUser.UserId, logoutUser.Password)
+	user, err := l.authUseCase.Authenticate(logoutUser.UserID, logoutUser.Password)
 	if err != nil {
 		l.logger.Error("Authentication failed", zap.Error(err))
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -62,7 +62,7 @@ func (l *LogoutController) DecideLogout(c *gin.Context) {
 	}
 
 	// ログアウト成功
-	l.logger.Info("Successfully logged out", zap.Uint("userId", user.Id))
+	l.logger.Info("Successfully logged out", zap.Uint("userId", user.ID))
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ログアウトに成功しました",
 		"code":    "LOGOUT_SUCCESS",

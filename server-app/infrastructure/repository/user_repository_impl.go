@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
 	"github.com/kazukimurahashi12/webapp/infrastructure/crypto"
 	"github.com/kazukimurahashi12/webapp/infrastructure/db"
@@ -59,54 +61,111 @@ func (r *userRepository) Create(user *domainUser.User) error {
 	return r.db.Table("USERS").Create(&newUser).Error
 }
 
-func (r *userRepository) Update(user *domainUser.User) error {
-	existingUser := domainUser.User{}
-	if err := r.db.Table("USERS").Where("user_id = ?", user.ID).First(&existingUser).Error; err != nil {
-		return err
-	}
-
-	existingUser.Password = user.Password
-	return r.db.Table("USERS").Save(&existingUser).Error
-}
-
 // ユーザーIDを変更
 func (r *userRepository) UpdateID(oldID, newID string) (*domainUser.User, error) {
+	// トランザクション開始
+	tx := r.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	user := domainUser.User{}
-	if err := r.db.Table("USERS").Where("user_id = ?", oldID).First(&user).Error; err != nil {
+	if err := tx.Table("USERS").Where("user_id = ?", oldID).First(&user).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domainUser.ErrUserNotFound
+		}
 		return nil, err
 	}
 
 	user.UserID = newID
-	if err := r.db.Table("USERS").Save(&user).Error; err != nil {
+	if err := tx.Table("USERS").Save(&user).Error; err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
-	return &domainUser.User{
+	result := &domainUser.User{
 		UserID:   user.UserID,
 		Password: user.Password,
-	}, nil
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // ユーザーPWを変更
 func (r *userRepository) UpdatePassword(userID, newPassword string) (*domainUser.User, error) {
+	// トランザクション開始
+	tx := r.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	user := domainUser.User{}
-	if err := r.db.Table("USERS").Where("user_id = ?", userID).First(&user).Error; err != nil {
+	if err := tx.Table("USERS").Where("user_id = ?", userID).First(&user).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domainUser.ErrUserNotFound
+		}
 		return nil, err
 	}
 
 	crypto := crypto.NewBcryptCrypto()
 	encryptPw, err := crypto.Encrypt(newPassword)
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
 	user.Password = encryptPw
-	if err := r.db.Table("USERS").Save(&user).Error; err != nil {
+	if err := tx.Table("USERS").Save(&user).Error; err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
-	return &domainUser.User{
+	result := &domainUser.User{
 		UserID:   user.UserID,
 		Password: user.Password,
-	}, nil
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// ユーザー情報を更新
+func (r *userRepository) Update(user *domainUser.User) error {
+	// トランザクション開始
+	tx := r.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	existingUser := domainUser.User{}
+	if err := tx.Table("USERS").Where("user_id = ?", user.ID).First(&existingUser).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domainUser.ErrUserNotFound
+		}
+		return err
+	}
+
+	existingUser.Password = user.Password
+	if err := tx.Table("USERS").Save(&existingUser).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }

@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	domainBlog "github.com/kazukimurahashi12/webapp/domain/blog"
 	"github.com/kazukimurahashi12/webapp/infrastructure/db"
 	"go.uber.org/zap"
@@ -20,13 +22,8 @@ func NewBlogRepository(manager *db.DBManager) domainBlog.BlogRepository {
 }
 
 // ブログを作成
-func (r *blogRepository) Create(blog *domainBlog.BlogPost) error {
-	newBlog := domainBlog.Blog{
-		Title:   blog.Title,
-		Content: blog.Content,
-		LoginID: blog.LoginID,
-	}
-	return r.db.Table("BLOGS").Create(&newBlog).Error
+func (r *blogRepository) Create(blog *domainBlog.Blog) error {
+	return r.db.Table("BLOGS").Create(&blog).Error
 }
 
 // ブログを取得
@@ -35,12 +32,7 @@ func (r *blogRepository) FindByID(id string) (*domainBlog.Blog, error) {
 	if err := r.db.Table("BLOGS").Where("id = ?", id).First(&blog).Error; err != nil {
 		return nil, err
 	}
-	return &domainBlog.Blog{
-		ID:      blog.ID,
-		Title:   blog.Title,
-		Content: blog.Content,
-		LoginID: blog.LoginID,
-	}, nil
+	return &blog, nil
 }
 
 // ユーザーIDに紐づくブログを取得
@@ -50,28 +42,41 @@ func (r *blogRepository) FindByUserID(userID string) ([]domainBlog.Blog, error) 
 		return nil, err
 	}
 
-	var domainBlogs []domainBlog.Blog
-	for _, blog := range blogs {
-		domainBlogs = append(domainBlogs, domainBlog.Blog{
-			ID:      blog.ID,
-			Title:   blog.Title,
-			Content: blog.Content,
-			LoginID: blog.LoginID,
-		})
-	}
-	return domainBlogs, nil
+	return blogs, nil
 }
 
 // ブログを更新
 func (r *blogRepository) Update(blog *domainBlog.Blog) error {
+	// トランザクション開始
+	tx := r.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	existingBlog := domainBlog.Blog{}
-	if err := r.db.Table("BLOGS").Where("id = ?", blog.ID).First(&existingBlog).Error; err != nil {
+	if err := tx.Table("BLOGS").Where("id = ?", blog.ID).First(&existingBlog).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domainBlog.ErrBlogNotFound
+		}
 		return err
 	}
 
-	existingBlog.Title = blog.Title
-	existingBlog.Content = blog.Content
-	return r.db.Table("BLOGS").Save(&existingBlog).Error
+	// 更新対象フィールドを明示的に指定
+	updateData := map[string]interface{}{
+		"title":   blog.Title,
+		"content": blog.Content,
+	}
+
+	if err := tx.Table("BLOGS").Where("id = ?", blog.ID).Updates(updateData).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// コミット
+	return tx.Commit().Error
 }
 
 // ブログを削除

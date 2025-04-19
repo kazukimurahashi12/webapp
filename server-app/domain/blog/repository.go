@@ -2,7 +2,7 @@ package blog
 
 // ブログRepositoryインターフェース
 type BlogRepository interface {
-	Create(blog *BlogPost) error
+	Create(blog *Blog) error
 	FindByID(id string) (*Blog, error)
 	FindByUserID(userID string) ([]Blog, error)
 	Update(blog *Blog) error

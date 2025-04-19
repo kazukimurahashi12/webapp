@@ -37,7 +37,7 @@ func main() {
 			_ = logger.Sync()
 		}
 	}()
-	//起動中ログ出力
+	// 起動中ログ出力
 	logger.Info("Starting application...")
 
 	// ルーター初期化

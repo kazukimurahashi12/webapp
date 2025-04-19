@@ -12,7 +12,7 @@ import (
 )
 
 //#######################################
-//ログインコントローラー
+// ログインコントローラー
 //#######################################
 
 type LoginController struct {
@@ -31,9 +31,9 @@ func NewLoginController(authUseCase auth.UseCase, sessionManager session.Session
 
 // ログインユーザー情報取得
 func (l *LoginController) GetLogin(c *gin.Context) {
-	userID, err := l.sessionManager.GetSession(c)
+	loginID, err := l.sessionManager.GetSession(c)
 	if err != nil {
-		l.logger.Error("Failed to get session", zap.String("userID", userID), zap.Error(err))
+		l.logger.Error("Failed to get session", zap.String("loginID", loginID), zap.Error(err))
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "セッションが無効です。再度ログインしてください",
 			"code":  "SESSION_INVALID",
@@ -42,9 +42,9 @@ func (l *LoginController) GetLogin(c *gin.Context) {
 	}
 
 	// UseCaseユーザー情報取得
-	user, err := l.authUseCase.GetUserByID(userID)
+	user, err := l.authUseCase.GetUserByID(loginID)
 	if err != nil {
-		l.logger.Error("Failed to get user", zap.String("userID", userID), zap.Error(err))
+		l.logger.Error("Failed to get user", zap.String("userID", loginID), zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "ユーザー情報の取得に失敗しました",
 			"code":  "USER_FETCH_FAILED",

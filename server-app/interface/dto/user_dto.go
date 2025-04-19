@@ -26,3 +26,9 @@ type FormUser struct {
 	UserID   string `json:"userId" binding:"required,min=2,max=10"`
 	Password string `json:"password" binding:"required,min=4,max=20"`
 }
+
+type UserCreatedResponse struct {
+	ID        uint      `json:"id"`
+	UserID    string    `json:"userId" binding:"required,min=2,max=10"`
+	CreatedAt time.Time `json:"createdAt"`
+}

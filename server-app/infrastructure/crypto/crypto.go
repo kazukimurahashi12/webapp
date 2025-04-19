@@ -1,13 +1,13 @@
 package crypto
 
 import (
-	"github.com/kazukimurahashi12/webapp/domain"
+	"github.com/kazukimurahashi12/webapp/domain/crypto"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type BcryptCrypto struct{}
 
-func NewBcryptCrypto() domain.Crypto {
+func NewBcryptCrypto() crypto.Crypto {
 	return &BcryptCrypto{}
 }
 

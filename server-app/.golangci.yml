@@ -1,45 +1,42 @@
 linters:
-  enable-all: false
-  disable-all: true
-  enable: # please keep this alphabetized
-    - depguard # Go linter that checks if package imports are in a list of acceptable packages.
-    - gofmt # go fmt
-    - goimports # goimport
-    - gosec # Inspects source code for security problems.
-    - gosimple # [default] Linter for Go source code that specializes in simplifying code.
-    - govet # [default] Vet examines Go source code and reports suspicious constructs, such as Printf calls whose arguments do not align with the format string.
-    - ineffassign # [default] Detects when assignments to existing variables are not used.
-    - misspell # Finds commonly misspelled English words in comments.
-    - nakedret # Checks that functions with naked returns are not longer than a maximum size (can be zero).
-    - revive # Fast, configurable, extensible, flexible, and beautiful linter for Go. Drop-in replacement of golint.
-    - staticcheck # [default] staticcheck
-    - unconvert # Remove unnecessary type conversions.
-    - unparam # Reports unused function parameters
-    - unused # [default] Checks Go code for unused constants, variables, functions and types.
-    - errcheck # [default] Errcheck is a program for checking for unchecked errors in Go code. These unchecked errors can be critical bugs in some cases.
-    - errorlint # Errorlint is a linter for that can be used to find code that will cause problems with the error wrapping scheme introduced in Go 1.13.
-    - gocritic # chekers (diagnostic, style, performance)
+  enable-all: false     # すべてのリンターを有効にしない
+  disable-all: true     # すべてのリンターを無効にする（明示的に指定したものだけ使う）
+  enable:               # 使用するリンター一覧（アルファベット順を維持すること）
+    - depguard          # 特定のパッケージのインポートを禁止・許可リストで制御できるリンター
+    - gofmt             # gofmt によるフォーマットチェック
+    - goimports         # import の自動整理・整形を行う goimports
+    - gosec             # セキュリティ上の問題を静的解析で検出
+    - gosimple          # コードを簡潔に書くための提案をするリンター
+    - govet             # Go標準の静的解析ツール。疑わしい構文（printfの書式ミスなど）を検出
+    - ineffassign       # 使用されていない変数への代入を検出
+    - misspell          # コメント内のよくある英単語のスペルミスを検出
+    - nakedret          # ネイキッドリターンを使っている関数が長すぎないかをチェック
+    - revive            # golint の高性能な代替。柔軟で高速な構文チェックが可能
+    - staticcheck       # 高度な静的解析を行うリンター
+    - unconvert         # 不要な型変換を検出して削除
+    - unparam           # 使用されていない関数引数を検出
+    - unused            # 使用されていない定数、変数、関数、型などを検出
+    - errcheck          # チェックされていないエラーを検出（見逃しがちなバグを防止）
+    - errorlint         # Go1.13以降のエラーラップに関する問題コードを検出
+    - gocritic          # コーディングスタイル・パフォーマンス・可読性など多角的に検査
 
 run:
-  timeout: 10m
+  timeout: 5m          # リンターのタイムアウト時間5分
 
 linters-settings:
   depguard:
     rules:
       main:
         deny:
-          - pkg: io/ioutil
+          - pkg: io/ioutil      # 非推奨となった io/ioutil パッケージの使用を禁止
             desc: The io/ioutil package has been deprecated, see https://go.dev/doc/go1.16#ioutil
   revive:
     rules:
-      - name: package-comments  # パッケージ/関数コメント disable
+      - name: package-comments  # パッケージや関数コメントのチェックは無効化
         disabled: true
+
 issues:
-  # The default exclusion rules are a bit too permissive, so copying the relevant ones below
-  exclude-use-default: false
+  exclude-use-default: false  # デフォルトの除外ルールは使用しない（すべて表示）
 
-  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
-  max-issues-per-linter: 0
-
-  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
-  max-same-issues: 0
+  max-issues-per-linter: 0    # 各リンターごとの最大報告数。0は無制限
+  max-same-issues: 0          # 同じメッセージの繰り返し数の上限。0は無制限

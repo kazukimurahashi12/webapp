@@ -40,7 +40,7 @@ func RegisterRoutes(router *gin.Engine, container *di.Container) {
 // このハンドラ関数はクライアントのリクエストが処理される前に実行
 func isAuthenticated(sessionManager session.SessionManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//セッションからユーザーIDを取得
+		// セッションからユーザーIDを取得
 		userID, err := sessionManager.GetSession(c)
 		if err != nil {
 			log.Println("セッションからIDの取得に失敗しました。", err.Error())
@@ -48,15 +48,19 @@ func isAuthenticated(sessionManager session.SessionManager) gin.HandlerFunc {
 			return
 		}
 
-		//セッションにユーザーIDが存在していない場合
+		// セッションにユーザーIDが存在していない場合
 		if userID == "" {
 			fmt.Println("セッションにユーザーIDが存在していません")
 			c.JSON(http.StatusFound, gin.H{"message": "status 302 fail to get session id"})
 			//リクエストを中断
 			c.Abort()
 		}
+
+		// セッションにユーザーIDが存在している場合
 		fmt.Println("success get session id")
-		//次のミドルウェアまたはハンドラ関数を実行
+		// ユーザーIDをコンテキストに保存
+		c.Set("userID", userID)
+		// 次のミドルウェアまたはハンドラ関数を実行
 		c.Next()
 	}
 }

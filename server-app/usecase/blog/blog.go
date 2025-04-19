@@ -6,11 +6,11 @@ import (
 )
 
 type UseCase interface {
-	NewCreateBlog(blog *domainBlog.BlogPost) (*domainBlog.BlogPost, error)
+	NewCreateBlog(blog *domainBlog.Blog) (*domainBlog.Blog, error)
 	GetBlogsByUserID(userID string) ([]domainBlog.Blog, error)
 	GetUserByID(userID string) (*domainUser.User, error)
 	DeleteBlog(id string) error
-	UpdateBlog(blog *domainBlog.BlogPost) (*domainBlog.BlogPost, error)
+	UpdateBlog(blog *domainBlog.Blog) (*domainBlog.Blog, error)
 	GetBlogByID(id string) (*domainBlog.Blog, error)
-	NewCreateUser(user *domainUser.FormUser) (*domainUser.User, error)
+	NewCreateUser(user *domainUser.User) (*domainUser.User, error)
 }

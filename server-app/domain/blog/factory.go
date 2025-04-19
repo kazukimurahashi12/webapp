@@ -7,25 +7,26 @@ import (
 
 // DB保存用のBlog を生成するファクトリ関数
 // ID（uint）CreatedAt/UpdatedAt自動生成
-func NewBlog(post *BlogPost) (*Blog, error) {
-	if len(post.LoginID) < 2 || len(post.LoginID) > 10 {
+func NewBlog(loginID, title, content string) (*Blog, error) {
+	// バリデーションチェック
+	if len(loginID) < 2 || len(loginID) > 10 {
 		return nil, errors.New("LoginIDの長さが不正です")
 	}
-	if len(post.Title) < 1 || len(post.Title) > 50 {
+	if len(title) < 1 || len(title) > 50 {
 		return nil, errors.New("タイトルの長さが不正です")
 	}
-	if len(post.Content) < 1 || len(post.Content) > 8000 {
+	if len(content) < 1 || len(content) > 8000 {
 		return nil, errors.New("本文の長さが不正です")
 	}
 
 	// 現在時刻を取得
 	now := time.Now()
 
-	//GORMが自動でインクリメントID
+	// GORMが自動でインクリメントID
 	return &Blog{
-		LoginID:   post.LoginID,
-		Title:     post.Title,
-		Content:   post.Content,
+		LoginID:   loginID,
+		Title:     title,
+		Content:   content,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}, nil

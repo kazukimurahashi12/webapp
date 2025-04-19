@@ -34,6 +34,28 @@ jobs:
     displayName: Use Go 1.20
     inputs:
       version: 1.20
+  - script: |
+      go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+    displayName: Install golangci-lint
+
+  - script: |
+      golangci-lint run --config=.golangci.yml ./...
+    displayName: Run golangci-lint
+
+  - script: |
+      go test ./... -coverprofile=coverage.out
+    displayName: Run unit tests with coverage
+
+  - script: |
+      total=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
+      echo "Total coverage: $total%"
+      threshold=85.0
+      result=$(echo "$total >= $threshold" | bc -l)
+      if [ "$result" -ne 1 ]; then
+        echo "Test coverage is below threshold of ${threshold}%"
+        exit 1
+      fi
+    displayName: Enforce coverage threshold (>=85%)
   - task: Docker@0
     displayName: build
     inputs:

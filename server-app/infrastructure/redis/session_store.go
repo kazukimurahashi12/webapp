@@ -19,7 +19,7 @@ import (
 )
 
 //#######################################
-//Redis接続処理
+// Redis接続処理
 //#######################################
 
 var _ session.SessionManager = &RedisSessionStore{}
@@ -36,7 +36,7 @@ func NewRedisSessionStore() *RedisSessionStore {
 		panic(err)
 	}
 
-	//環境変数設定
+	// 環境変数設定
 	// プロジェクトルートディレクトリを取得
 	rootDir := os.Getenv("PROJECT_ROOT")
 	if rootDir == "" {
@@ -63,7 +63,7 @@ func NewRedisSessionStore() *RedisSessionStore {
 		// ローカル環境での接続先を指定
 		dbHost = os.Getenv("REDIS_LOCAL_HOST")
 	}
-	//Redisデータベース接続のためRedisクライアント作成
+	// Redisデータベース接続のためRedisクライアント作成
 	conn := redis.NewClient(&redis.Options{
 		Addr:     dbHost,
 		Password: "",

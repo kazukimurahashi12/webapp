@@ -1,8 +1,6 @@
 package blog
 
 import (
-	"strconv"
-
 	domainBlog "github.com/kazukimurahashi12/webapp/domain/blog"
 	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
 )
@@ -19,13 +17,14 @@ func NewBlogUseCase(blogRepo domainBlog.BlogRepository, userRepo domainUser.User
 	}
 }
 
-func (b *blogUseCase) NewCreateBlog(blog *domainBlog.BlogPost) (*domainBlog.BlogPost, error) {
+func (b *blogUseCase) NewCreateBlog(blog *domainBlog.Blog) (*domainBlog.Blog, error) {
 	err := b.blogRepo.Create(blog)
 	if err != nil {
 		return nil, err
 	}
 	return blog, nil
 }
+
 func (b *blogUseCase) GetBlogsByUserID(userID string) ([]domainBlog.Blog, error) {
 	return b.blogRepo.FindByUserID(userID)
 }
@@ -38,47 +37,24 @@ func (b *blogUseCase) DeleteBlog(id string) error {
 	return b.blogRepo.Delete(id)
 }
 
-func (b *blogUseCase) UpdateBlog(blogPost *domainBlog.BlogPost) (*domainBlog.BlogPost, error) {
-	// stringからuintに変換
-	id, err := strconv.ParseUint(blogPost.ID, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	blog := &domainBlog.Blog{
-		ID:      uint(id),
-		LoginID: blogPost.LoginID,
-		Title:   blogPost.Title,
-		Content: blogPost.Content,
-	}
+func (b *blogUseCase) UpdateBlog(blog *domainBlog.Blog) (*domainBlog.Blog, error) {
 
 	updateErr := b.blogRepo.Update(blog)
 	if updateErr != nil {
 		return nil, updateErr
 	}
 
-	return &domainBlog.BlogPost{
-		ID:      strconv.FormatUint(uint64(blog.ID), 10),
-		LoginID: blog.LoginID,
-		Title:   blog.Title,
-		Content: blog.Content,
-	}, nil
+	return blog, nil
 }
 
-func (b *blogUseCase) NewCreateUser(user *domainUser.FormUser) (*domainUser.User, error) {
-	// FormUserをUserに変換
-	newUser := &domainUser.User{
-		UserID:   user.UserID,
-		Password: user.Password,
-	}
-
+func (b *blogUseCase) NewCreateUser(user *domainUser.User) (*domainUser.User, error) {
 	// ユーザー登録処理
-	err := b.userRepo.Create(newUser)
+	err := b.userRepo.Create(user)
 	if err != nil {
 		return nil, err
 	}
 
-	return newUser, nil
+	return user, nil
 }
 
 func (b *blogUseCase) GetBlogByID(id string) (*domainBlog.Blog, error) {

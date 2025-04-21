@@ -32,3 +32,7 @@ type UserCreatedResponse struct {
 	UserID    string    `json:"userId" binding:"required,min=2,max=10"`
 	CreatedAt time.Time `json:"createdAt"`
 }
+
+type UserIDResponse struct {
+	UserID string `json:"userId" binding:"required,min=2,max=10"`
+}

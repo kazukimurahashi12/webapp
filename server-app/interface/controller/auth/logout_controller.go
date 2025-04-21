@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
+	"github.com/kazukimurahashi12/webapp/interface/mapper"
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	"github.com/kazukimurahashi12/webapp/usecase/auth"
 	"go.uber.org/zap"
@@ -61,10 +62,13 @@ func (l *LogoutController) DecideLogout(c *gin.Context) {
 		return
 	}
 
+	// DTOに変換してレスポンス
+	response := mapper.ToUserIDResponse(user)
 	// ログアウト成功
-	l.logger.Info("Successfully logged out", zap.Uint("userId", user.ID))
+	l.logger.Info("Successfully logged out", zap.Any("userId", response))
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ログアウトに成功しました",
 		"code":    "LOGOUT_SUCCESS",
+		"user":    response,
 	})
 }

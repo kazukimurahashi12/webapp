@@ -12,3 +12,9 @@ func ToUserCreatedResponse(u *user.User) *dto.UserCreatedResponse {
 		CreatedAt: u.CreatedAt,
 	}
 }
+
+func ToUserIDResponse(u *user.User) *dto.UserIDResponse {
+	return &dto.UserIDResponse{
+		UserID: u.UserID,
+	}
+}

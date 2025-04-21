@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/kazukimurahashi12/webapp/infrastructure/di"
-	"github.com/kazukimurahashi12/webapp/infrastructure/web"
+	"github.com/kazukimurahashi12/webapp/infrastructure/web/middleware"
 )
 
 // APIエンドポイントのルーティング
@@ -12,7 +12,7 @@ func GetRouter() *gin.Engine {
 	router := gin.Default()
 
 	// CORS設定読み込み
-	router.Use(web.ConfigureCORS())
+	router.Use(middleware.ConfigureCORS())
 
 	// DIコンテナ作成
 	// NewContainer 依存性注入用のコンストラクタ

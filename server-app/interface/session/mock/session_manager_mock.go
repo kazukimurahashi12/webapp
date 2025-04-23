@@ -31,8 +31,8 @@ func (m *MockSessionManager) DeleteSession(c *gin.Context) error {
 	return args.Error(0)
 }
 
-func (m *MockSessionManager) UpdateSession(c *gin.Context, newID, oldID string) error {
-	args := m.Called(c, newID, oldID)
+func (m *MockSessionManager) UpdateSession(c *gin.Context, newID string) error {
+	args := m.Called(c, newID)
 	return args.Error(0)
 }
 

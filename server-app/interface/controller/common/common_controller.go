@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kazukimurahashi12/webapp/infrastructure/web/middleware"
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	"go.uber.org/zap"
 )
@@ -22,21 +23,30 @@ func NewCommonController(sessionManager session.SessionManager, logger *zap.Logg
 
 // セッションからログインIDを取得するAPI
 func (c *CommonController) GetLoginIdBySession(ctx *gin.Context) {
-	// セッションからIDを取得
-	id, err := c.sessionManager.GetSession(ctx)
-	if err != nil {
-		c.logger.Error("Failed to get ID from session", zap.Error(err))
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"error": "セッションが無効です。再度ログインしてください",
-			"code":  "SESSION_INVALID",
+	// コンテクストからリクエストIDを取得
+	reqCtx := ctx.Request.Context()
+	requestID := middleware.GetRequestID(reqCtx)
+
+	// セッションによるログイン認証はroutes.go_isAuthenticated共通実施しコンテクストから取得
+	loginID, exists := ctx.Get("userID")
+	if !exists {
+		c.logger.Error("userID not found in context",
+			zap.String("requestID", requestID))
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error":      "userIDが取得できませんでした",
+			"code":       "USER_ID_NOT_FOUND",
+			"request_id": requestID,
 		})
 		return
 	}
 
-	c.logger.Info("Successfully fetched login ID from session", zap.String("id", id))
+	c.logger.Info("Successfully fetched login ID from session",
+		zap.String("requestID", requestID),
+		zap.String("loginID", loginID.(string)))
 	ctx.JSON(http.StatusOK, gin.H{
-		"message": "ログインIDを取得しました",
-		"code":    "LOGIN_ID_FETCHED",
-		"id":      id,
+		"message":    "ログインIDを取得しました",
+		"code":       "LOGIN_ID_FETCHED",
+		"request_id": requestID,
+		"loginID":    loginID.(string),
 	})
 }

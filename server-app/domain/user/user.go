@@ -12,8 +12,8 @@ type User struct {
 }
 
 type UserIdChange struct {
-	NowID    string `json:"nowId" binding:"required,min=2,max=10"`
-	ChangeID string `json:"changeId" binding:"required,min=2,max=10"`
+	CurrentId string `json:"currentId" binding:"required,min=2,max=10"`
+	NewId     string `json:"newId" binding:"required,min=2,max=10"`
 }
 
 type UserPwChange struct {

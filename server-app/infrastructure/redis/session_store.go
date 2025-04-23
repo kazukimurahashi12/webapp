@@ -134,7 +134,7 @@ func (s *RedisSessionStore) DeleteSession(c *gin.Context) error {
 }
 
 // セッションを更新
-func (s *RedisSessionStore) UpdateSession(c *gin.Context, newID, oldID string) error {
+func (s *RedisSessionStore) UpdateSession(c *gin.Context, newID string) error {
 	cookieKey := os.Getenv("LOGIN_USER_ID_KEY")
 	redisKey, err := c.Cookie(cookieKey)
 	if err != nil {

@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
 	"github.com/kazukimurahashi12/webapp/infrastructure/web/middleware"
+	"github.com/kazukimurahashi12/webapp/interface/dto"
 	"github.com/kazukimurahashi12/webapp/interface/mapper"
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	"github.com/kazukimurahashi12/webapp/usecase/auth"
@@ -36,7 +36,7 @@ func (l *LogoutController) DecideLogout(c *gin.Context) {
 	ctx := c.Request.Context()
 	requestID := middleware.GetRequestID(ctx)
 
-	var logoutUser domainUser.FormUser
+	var logoutUser dto.FormUser
 	if err := c.ShouldBindJSON(&logoutUser); err != nil {
 		l.logger.Error("Failed to bind JSON",
 			zap.String("requestID", requestID),

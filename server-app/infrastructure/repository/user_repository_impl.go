@@ -22,27 +22,21 @@ func NewUserRepository(manager *db.DBManager) domainUser.UserRepository {
 }
 
 // シーケンシャルIDによりユーザーを取得
-func (r *userRepository) FindByID(id string) (*domainUser.User, error) {
+func (r *userRepository) FindUserByID(id uint) (*domainUser.User, error) {
 	user := domainUser.User{}
 	if err := r.db.Table("USERS").Where("id = ?", id).First(&user).Error; err != nil {
 		return nil, err
 	}
-	return &domainUser.User{
-		ID:       user.ID,
-		Password: user.Password,
-	}, nil
+	return &user, nil
 }
 
 // ユーザーIDに紐づくユーザーを取得
-func (r *userRepository) FindByUserID(userID string) (*domainUser.User, error) {
+func (r *userRepository) FindUserByUserID(userID string) (*domainUser.User, error) {
 	user := domainUser.User{}
 	if err := r.db.Table("USERS").Where("user_id = ?", userID).First(&user).Error; err != nil {
 		return nil, err
 	}
-	return &domainUser.User{
-		UserID:   user.UserID,
-		Password: user.Password,
-	}, nil
+	return &user, nil
 }
 
 // ユーザーを作成
@@ -86,16 +80,11 @@ func (r *userRepository) UpdateID(oldID, newID string) (*domainUser.User, error)
 		return nil, err
 	}
 
-	result := &domainUser.User{
-		UserID:   user.UserID,
-		Password: user.Password,
-	}
-
 	if err := tx.Commit().Error; err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	return &user, nil
 }
 
 // ユーザーPWを変更
@@ -130,16 +119,11 @@ func (r *userRepository) UpdatePassword(userID, newPassword string) (*domainUser
 		return nil, err
 	}
 
-	result := &domainUser.User{
-		UserID:   user.UserID,
-		Password: user.Password,
-	}
-
 	if err := tx.Commit().Error; err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	return &user, nil
 }
 
 // ユーザー情報を更新

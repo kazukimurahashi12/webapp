@@ -30,7 +30,7 @@ func RegisterRoutes(router *gin.Engine, container *di.Container) {
 
 	// Auth系ルーティング
 	router.POST("/logout", isAuthenticated(container.SessionManager), container.LogoutController.DecideLogout)
-	router.POST("/regist", isAuthenticated(container.SessionManager), container.BlogController.Regist)
+	router.POST("/regist", isAuthenticated(container.SessionManager), container.RegistController.Regist)
 
 	// ログイン共通系ルーティング
 	router.GET("/api/login-id", isAuthenticated(container.SessionManager), container.CommonController.GetLoginIdBySession)

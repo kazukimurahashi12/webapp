@@ -25,6 +25,7 @@ type Container struct {
 	HomeController    *blogController.HomeController
 	LoginController   *authController.LoginController
 	BlogController    *blogController.BlogController
+	RegistController  *userController.RegistController
 	SettingController *userController.SettingController
 	LogoutController  *authController.LogoutController
 	CommonController  *common.CommonController
@@ -85,7 +86,8 @@ func NewContainer() *Container {
 	return &Container{
 		HomeController:    blogController.NewHomeController(blogUC, ss, logger),
 		LoginController:   authController.NewLoginController(authUC, ss, logger),
-		BlogController:    blogController.NewBlogController(blogUC, ss, logger),
+		BlogController:    blogController.NewBlogController(blogUC, userUC, ss, logger),
+		RegistController:  userController.NewRegistController(userUC, ss, logger),
 		SettingController: userController.NewSettingController(userUC, ss, logger),
 		LogoutController:  authController.NewLogoutController(authUC, ss, logger),
 		CommonController:  common.NewCommonController(ss, logger),

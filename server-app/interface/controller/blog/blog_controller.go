@@ -1,28 +1,31 @@
 package blog
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kazukimurahashi12/webapp/domain/blog"
-	"github.com/kazukimurahashi12/webapp/domain/user"
 	"github.com/kazukimurahashi12/webapp/infrastructure/web/middleware"
 	"github.com/kazukimurahashi12/webapp/interface/dto"
 	"github.com/kazukimurahashi12/webapp/interface/mapper"
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	usecaseBlog "github.com/kazukimurahashi12/webapp/usecase/blog"
+	usecaseUser "github.com/kazukimurahashi12/webapp/usecase/user"
 	"go.uber.org/zap"
 )
 
 type BlogController struct {
 	blogUseCase    usecaseBlog.UseCase
+	userUseCase    usecaseUser.UseCase
 	sessionManager session.SessionManager
 	logger         *zap.Logger
 }
 
-func NewBlogController(blogUseCase usecaseBlog.UseCase, sessionManager session.SessionManager, logger *zap.Logger) *BlogController {
+func NewBlogController(blogUseCase usecaseBlog.UseCase, userUseCase usecaseUser.UseCase, sessionManager session.SessionManager, logger *zap.Logger) *BlogController {
 	return &BlogController{
 		blogUseCase:    blogUseCase,
+		userUseCase:    userUseCase,
 		sessionManager: sessionManager,
 		logger:         logger,
 	}
@@ -68,9 +71,24 @@ func (b *BlogController) PostBlog(c *gin.Context) {
 		})
 		return
 	}
+	// ユーザー識別子からユーザーを検索して主キーを取得
+	user, err := b.userUseCase.FindUserByUserID(userIDStr)
+	if err != nil {
+		b.logger.Error("Failed to find user by userID",
+			zap.String("userID", userIDStr),
+			zap.Error(err),
+			zap.String("requestID", requestID),
+		)
+		c.JSON(http.StatusNotFound, gin.H{
+			"error":      "指定されたユーザーが存在しません",
+			"code":       "USER_NOT_FOUND",
+			"request_id": requestID,
+		})
+		return
+	}
 
 	// DTO、Entity変換
-	entityBlog, err := blog.NewBlog(userIDStr, req.Title, req.Content)
+	entityBlog, err := blog.NewBlog(user.ID, req.Title, req.Content)
 	if err != nil {
 		b.logger.Error("Domain validation failed in blog creation", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -81,7 +99,7 @@ func (b *BlogController) PostBlog(c *gin.Context) {
 	}
 
 	// ブログ記事登録処理UseCase
-	blog, err := b.blogUseCase.NewCreateBlog(entityBlog)
+	createdBlog, err := b.blogUseCase.NewCreateBlog(entityBlog)
 	if err != nil {
 		b.logger.Error("Failed to create blog", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -92,7 +110,7 @@ func (b *BlogController) PostBlog(c *gin.Context) {
 	}
 
 	// DTOに変換してレスポンス
-	response := mapper.ToBlogCreatedResponse(blog)
+	response := mapper.ToBlogCreatedResponse(createdBlog)
 
 	b.logger.Info("Successfully created blog", zap.Any("blog", response))
 	c.JSON(http.StatusOK, gin.H{
@@ -133,9 +151,23 @@ func (b *BlogController) GetBlogView(c *gin.Context) {
 	}
 
 	// リクエストパラメータからIDを取得
-	id := c.Param("id")
+	idStr := c.Param("id")
+	// uint型に変換
+	var id uint
+	if _, err := fmt.Sscanf(idStr, "%d", &id); err != nil {
+		b.logger.Error("Invalid blog ID format",
+			zap.String("requestID", requestID),
+			zap.String("id", idStr))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":      "ブログIDの形式が不正です",
+			"code":       "INVALID_BLOG_ID",
+			"request_id": requestID,
+		})
+		return
+	}
+
 	// IDからブログ記事詳細を取得
-	blog, err := b.blogUseCase.GetBlogByID(id)
+	blog, err := b.blogUseCase.FindBlogByID(id)
 	if err != nil {
 		b.logger.Error("Failed to get blog by ID",
 			zap.String("requestID", requestID),
@@ -149,10 +181,10 @@ func (b *BlogController) GetBlogView(c *gin.Context) {
 	}
 
 	// 閲覧権限チェック
-	if blog.LoginID != userIDStr {
+	if blog.User.UserID != userIDStr {
 		b.logger.Warn("Unauthorized blog access attempt",
 			zap.String("requestID", requestID),
-			zap.String("blogID", id),
+			zap.Uint("blogID", id),
 			zap.String("userID", userIDStr))
 		c.JSON(http.StatusForbidden, gin.H{
 			"error":      "このブログ記事を閲覧する権限がありません",
@@ -220,8 +252,24 @@ func (b *BlogController) EditBlog(c *gin.Context) {
 		return
 	}
 
+	// ユーザー識別子からユーザーを検索して主キーを取得
+	user, err := b.userUseCase.FindUserByUserID(userIDStr)
+	if err != nil {
+		b.logger.Error("Failed to find user by userID",
+			zap.String("userID", userIDStr),
+			zap.Error(err),
+			zap.String("requestID", requestID),
+		)
+		c.JSON(http.StatusNotFound, gin.H{
+			"error":      "指定されたユーザーが存在しません",
+			"code":       "USER_NOT_FOUND",
+			"request_id": requestID,
+		})
+		return
+	}
+
 	// DTO→Entity変換
-	entityBlog, err := blog.NewBlog(userIDStr, req.Title, req.Content)
+	entityBlog, err := blog.NewBlog(user.ID, req.Title, req.Content)
 	if err != nil {
 		b.logger.Error("Domain validation failed in blog edit",
 			zap.String("requestID", requestID),
@@ -248,6 +296,7 @@ func (b *BlogController) EditBlog(c *gin.Context) {
 		return
 	}
 
+	// DTOに変換してレスポンス
 	response := mapper.ToBlogCreatedResponse(updatedBlog)
 	b.logger.Info("Successfully updated blog",
 		zap.String("requestID", requestID),
@@ -304,93 +353,5 @@ func (b *BlogController) DeleteBlog(c *gin.Context) {
 		"request_id":  requestID,
 		"blog_id":     id,
 		"blog_userID": userID,
-	})
-}
-
-// 会員情報登録
-func (b *BlogController) Regist(c *gin.Context) {
-	// コンテクストからリクエストIDを取得
-	ctx := c.Request.Context()
-	requestID := middleware.GetRequestID(ctx)
-
-	// セッションから userID を取得（ミドルウェア済み前提）
-	userID, exists := c.Get("userID")
-	if !exists {
-		b.logger.Error("userID not found in context",
-			zap.String("requestID", requestID))
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":      "userIDが取得できませんでした",
-			"code":       "USER_ID_NOT_FOUND",
-			"request_id": requestID,
-		})
-		return
-	}
-	userIDStr, ok := userID.(string)
-	if !ok {
-		b.logger.Error("userID is not a string",
-			zap.String("requestID", requestID))
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":      "userIDが正しい型ではありません",
-			"code":       "USER_ID_TYPE_ERROR",
-			"request_id": requestID,
-		})
-		return
-	}
-
-	// JSON形式のリクエストボディを構造体にバインド
-	req := dto.FormUser{}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		b.logger.Error("Failed to bind JSON in user registration",
-			zap.String("requestID", requestID),
-			zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":      "ユーザー登録データの形式が不正です",
-			"code":       "INVALID_USER_REGIST_FORMAT",
-			"request_id": requestID,
-		})
-		return
-	}
-
-	// DTO、Entity変換
-	entityUser, err := user.NewUser(userIDStr, req.Password)
-	if err != nil {
-		b.logger.Error("Domain validation failed in blog creation",
-			zap.String("requestID", requestID),
-			zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":      err.Error(),
-			"code":       "INVALID_BLOG_ENTITY",
-			"request_id": requestID,
-		})
-		return
-	}
-
-	// UseCaseに登録依頼
-	user, err := b.blogUseCase.NewCreateUser(entityUser)
-	if err != nil {
-		b.logger.Error("Failed to register user",
-			zap.String("requestID", requestID),
-			zap.String("registeredBy", userIDStr),
-			zap.Error(err),
-		)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":      "ユーザー登録に失敗しました",
-			"code":       "USER_REGISTRATION_FAILED",
-			"request_id": requestID,
-		})
-		return
-	}
-
-	b.logger.Info("Successfully registered user",
-		zap.String("requestID", requestID),
-		zap.String("registeredBy", userIDStr),
-		zap.Any("user", user),
-	)
-
-	c.JSON(http.StatusOK, gin.H{
-		"message":    "ユーザー登録が完了しました",
-		"code":       "USER_REGISTERED",
-		"request_id": requestID,
-		"user":       user,
 	})
 }

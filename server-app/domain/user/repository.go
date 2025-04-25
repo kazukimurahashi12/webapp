@@ -1,8 +1,8 @@
 package user
 
 type UserRepository interface {
-	FindByID(id string) (*User, error)
-	FindByUserID(userID string) (*User, error)
+	FindUserByID(id uint) (*User, error)
+	FindUserByUserID(userID string) (*User, error)
 	Create(user *User) error
 	Update(user *User) error
 	UpdateID(oldID, newID string) (*User, error)

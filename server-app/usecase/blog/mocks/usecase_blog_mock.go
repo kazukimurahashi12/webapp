@@ -9,7 +9,6 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	blog "github.com/kazukimurahashi12/webapp/domain/blog"
-	user "github.com/kazukimurahashi12/webapp/domain/user"
 )
 
 // MockUseCase is a mock of UseCase interface.
@@ -49,49 +48,34 @@ func (mr *MockUseCaseMockRecorder) DeleteBlog(id interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBlog", reflect.TypeOf((*MockUseCase)(nil).DeleteBlog), id)
 }
 
-// GetBlogByID mocks base method.
-func (m *MockUseCase) GetBlogByID(id string) (*blog.Blog, error) {
+// FindBlogByID mocks base method.
+func (m *MockUseCase) FindBlogByID(id uint) (*blog.Blog, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBlogByID", id)
+	ret := m.ctrl.Call(m, "FindBlogByID", id)
 	ret0, _ := ret[0].(*blog.Blog)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetBlogByID indicates an expected call of GetBlogByID.
-func (mr *MockUseCaseMockRecorder) GetBlogByID(id interface{}) *gomock.Call {
+// FindBlogByID indicates an expected call of FindBlogByID.
+func (mr *MockUseCaseMockRecorder) FindBlogByID(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlogByID", reflect.TypeOf((*MockUseCase)(nil).GetBlogByID), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindBlogByID", reflect.TypeOf((*MockUseCase)(nil).FindBlogByID), id)
 }
 
-// GetBlogsByUserID mocks base method.
-func (m *MockUseCase) GetBlogsByUserID(userID string) ([]blog.Blog, error) {
+// FindBlogsByUserID mocks base method.
+func (m *MockUseCase) FindBlogsByUserID(userID string) ([]blog.Blog, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBlogsByUserID", userID)
+	ret := m.ctrl.Call(m, "FindBlogsByUserID", userID)
 	ret0, _ := ret[0].([]blog.Blog)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetBlogsByUserID indicates an expected call of GetBlogsByUserID.
-func (mr *MockUseCaseMockRecorder) GetBlogsByUserID(userID interface{}) *gomock.Call {
+// FindBlogsByUserID indicates an expected call of FindBlogsByUserID.
+func (mr *MockUseCaseMockRecorder) FindBlogsByUserID(userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlogsByUserID", reflect.TypeOf((*MockUseCase)(nil).GetBlogsByUserID), userID)
-}
-
-// GetUserByID mocks base method.
-func (m *MockUseCase) GetUserByID(userID string) (*user.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserByID", userID)
-	ret0, _ := ret[0].(*user.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUserByID indicates an expected call of GetUserByID.
-func (mr *MockUseCaseMockRecorder) GetUserByID(userID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByID", reflect.TypeOf((*MockUseCase)(nil).GetUserByID), userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindBlogsByUserID", reflect.TypeOf((*MockUseCase)(nil).FindBlogsByUserID), userID)
 }
 
 // NewCreateBlog mocks base method.
@@ -107,21 +91,6 @@ func (m *MockUseCase) NewCreateBlog(b *blog.Blog) (*blog.Blog, error) {
 func (mr *MockUseCaseMockRecorder) NewCreateBlog(blog interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewCreateBlog", reflect.TypeOf((*MockUseCase)(nil).NewCreateBlog), blog)
-}
-
-// NewCreateUser mocks base method.
-func (m *MockUseCase) NewCreateUser(u *user.User) (*user.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewCreateUser", u)
-	ret0, _ := ret[0].(*user.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// NewCreateUser indicates an expected call of NewCreateUser.
-func (mr *MockUseCaseMockRecorder) NewCreateUser(user interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewCreateUser", reflect.TypeOf((*MockUseCase)(nil).NewCreateUser), user)
 }
 
 // UpdateBlog mocks base method.

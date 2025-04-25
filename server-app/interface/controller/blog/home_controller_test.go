@@ -38,7 +38,7 @@ func TestHomeController_GetTop(t *testing.T) {
 			{ID: 2, Title: "Test Blog 2"},
 		}
 		mockBlogUseCase.EXPECT().
-			GetBlogsByUserID("user123").
+			FindBlogsByUserID("user123").
 			Return(expectedBlogs, nil)
 
 		logger := zaptest.NewLogger(t)
@@ -71,7 +71,7 @@ func TestHomeController_GetTop(t *testing.T) {
 
 		// モック設定
 		mockBlogUseCase.EXPECT().
-			GetBlogsByUserID("user123").
+			FindBlogsByUserID("user123").
 			Return(nil, errors.New("fetch failed"))
 
 		logger := zaptest.NewLogger(t)
@@ -123,7 +123,7 @@ func TestHomeController_GetMypage(t *testing.T) {
 		// モック設定
 		expectedUser := &user.User{UserID: "user123"}
 		mockBlogUseCase.EXPECT().
-			GetUserByID("user123").
+			FindBlogsByUserID("user123").
 			Return(expectedUser, nil)
 
 		logger := zaptest.NewLogger(t)
@@ -155,7 +155,7 @@ func TestHomeController_GetMypage(t *testing.T) {
 
 		// モック設定
 		mockBlogUseCase.EXPECT().
-			GetUserByID("user123").
+			FindBlogsByUserID("user123").
 			Return(nil, errors.New("fetch failed"))
 
 		logger := zaptest.NewLogger(t)

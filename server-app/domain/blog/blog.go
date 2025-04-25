@@ -8,7 +8,7 @@ import (
 
 type Blog struct {
 	ID        uint           `gorm:"primaryKey"`
-	UserID    uint           // 外部キー
+	UserID    uint           `gorm:"not null"`
 	User      domaiUser.User `gorm:"foreignKey:UserID"`
 	Title     string         `binding:"required,min=1,max=50"`
 	Content   string         `binding:"required,min=1,max=8000"`

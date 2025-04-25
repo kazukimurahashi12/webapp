@@ -49,6 +49,36 @@ func (mr *MockUseCaseMockRecorder) CreateUser(userID, password interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUseCase)(nil).CreateUser), userID, password)
 }
 
+// FindUserByID mocks base method.
+func (m *MockUseCase) FindUserByID(id uint) (*user.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindUserByID", id)
+	ret0, _ := ret[0].(*user.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindUserByID indicates an expected call of FindUserByID.
+func (mr *MockUseCaseMockRecorder) FindUserByID(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindUserByID", reflect.TypeOf((*MockUseCase)(nil).FindUserByID), id)
+}
+
+// FindUserByUserID mocks base method.
+func (m *MockUseCase) FindUserByUserID(userID string) (*user.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindUserByUserID", userID)
+	ret0, _ := ret[0].(*user.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindUserByUserID indicates an expected call of FindUserByUserID.
+func (mr *MockUseCaseMockRecorder) FindUserByUserID(userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindUserByUserID", reflect.TypeOf((*MockUseCase)(nil).FindUserByUserID), userID)
+}
+
 // UpdateUserID mocks base method.
 func (m *MockUseCase) UpdateUserID(oldID, newID string) (*user.User, error) {
 	m.ctrl.T.Helper()

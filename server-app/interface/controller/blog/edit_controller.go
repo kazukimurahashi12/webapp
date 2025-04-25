@@ -1,6 +1,7 @@
 package blog
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -59,11 +60,24 @@ func (e *EditController) EditBlog(c *gin.Context) {
 		return
 	}
 
+	// string型変換
+	userIDStr, ok := userID.(string)
+	if !ok {
+		e.logger.Error("userID is not a string",
+			zap.String("requestID", requestID))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":      "userIDが正しい型ではありません",
+			"code":       "USER_ID_TYPE_ERROR",
+			"request_id": requestID,
+		})
+		return
+	}
+
 	// ログインユーザーと編集対象のブログのLoginIDを比較
-	if userID.(string) != req.UserID {
+	if userIDStr != req.UserID {
 		e.logger.Warn("Login user ID does not match blog post's LoginID",
 			zap.String("requestID", requestID),
-			zap.String("userID", userID.(string)),
+			zap.String("userID", userIDStr),
 			zap.String("blogPostLoginID", req.UserID))
 		c.JSON(http.StatusForbidden, gin.H{
 			"error":      "編集権限がありません",
@@ -73,8 +87,21 @@ func (e *EditController) EditBlog(c *gin.Context) {
 		return
 	}
 
+	// uint型に変換
+	var id uint
+	if _, err := fmt.Sscanf(req.ID, "%d", &id); err != nil {
+		e.logger.Error("Invalid blog ID format",
+			zap.String("requestID", requestID),
+			zap.String("id", req.ID))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":      "ブログIDの形式が不正です",
+			"code":       "INVALID_BLOG_ID",
+			"request_id": requestID,
+		})
+		return
+	}
 	// DTO、Entity変換
-	entityBlog, err := blog.NewBlog(userID.(string), req.Title, req.Content)
+	entityBlog, err := blog.NewBlog(id, req.Title, req.Content)
 	if err != nil {
 		e.logger.Error("Domain validation failed in blog creation",
 			zap.String("requestID", requestID),

@@ -3,6 +3,7 @@ package blog
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -35,7 +36,12 @@ func TestEditController_EditBlog(t *testing.T) {
 		mockBlogUseCase := blogMocks.NewMockUseCase(ctrl)
 
 		// モック設定
-		expectedBlog, _ := blog.NewBlog("user123", "updated title", "updated content")
+		// uint型に変換
+		var testID uint
+		if _, err := fmt.Sscanf("user123", "%d", &testID); err != nil {
+			t.Logf("Error converting string to uint: %v", err)
+		}
+		expectedBlog, _ := blog.NewBlog(testID, "updated title", "updated content")
 		mockBlogUseCase.EXPECT().
 			UpdateBlog(expectedBlog).
 			Return(expectedBlog, nil)
@@ -92,7 +98,12 @@ func TestEditController_EditBlog(t *testing.T) {
 		mockBlogUseCase := blogMocks.NewMockUseCase(ctrl)
 
 		// モック設定
-		expectedBlog, _ := blog.NewBlog("user123", "updated title", "updated content")
+		// uint型に変換
+		var testID uint
+		if _, err := fmt.Sscanf("user123", "%d", &testID); err != nil {
+			t.Logf("Error converting string to uint: %v", err)
+		}
+		expectedBlog, _ := blog.NewBlog(testID, "updated title", "updated content")
 		mockBlogUseCase.EXPECT().
 			UpdateBlog(expectedBlog).
 			Return(nil, errors.New("update failed"))

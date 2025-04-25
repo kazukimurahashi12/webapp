@@ -11,3 +11,16 @@ func ToBlogCreatedResponse(b *blog.Blog) *dto.BlogCreatedResponse {
 		Title: b.Title,
 	}
 }
+
+func ToBlogsResponse(blogs []blog.Blog) []*dto.BlogCreatedResponse {
+	responses := make([]*dto.BlogCreatedResponse, len(blogs))
+
+	for i, b := range blogs {
+		responses[i] = &dto.BlogCreatedResponse{
+			ID:    b.ID,
+			Title: b.Title,
+		}
+	}
+
+	return responses
+}

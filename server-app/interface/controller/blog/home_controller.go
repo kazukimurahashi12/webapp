@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kazukimurahashi12/webapp/infrastructure/web/middleware"
+	"github.com/kazukimurahashi12/webapp/interface/mapper"
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	"github.com/kazukimurahashi12/webapp/usecase/blog"
 	"github.com/sirupsen/logrus"
@@ -44,12 +45,25 @@ func (h *HomeController) GetTop(c *gin.Context) {
 		return
 	}
 
+	// string型変換
+	userIDStr, ok := userID.(string)
+	if !ok {
+		h.logger.Error("userID is not a string",
+			zap.String("requestID", requestID))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":      "userIDが正しい型ではありません",
+			"code":       "USER_ID_TYPE_ERROR",
+			"request_id": requestID,
+		})
+		return
+	}
+
 	// ブログ記事取得ORM
-	blogs, err := h.blogUseCase.GetBlogsByUserID(userID.(string))
+	blogs, err := h.blogUseCase.FindBlogsByUserID(userIDStr)
 	if err != nil {
 		h.logger.Error("Failed to get blogs",
 			zap.String("requestID", requestID),
-			zap.String("userID", userID.(string)),
+			zap.String("userID", userIDStr),
 			zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":      "ブログ記事の取得に失敗しました",
@@ -61,7 +75,7 @@ func (h *HomeController) GetTop(c *gin.Context) {
 
 	h.logger.Debug("Successfully retrieved blogs",
 		zap.String("requestID", requestID),
-		zap.String("userID", userID.(string)))
+		zap.String("userID", userIDStr))
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "ブログ記事を取得しました",
 		"code":       "BLOG_FETCHED",
@@ -94,12 +108,25 @@ func (h *HomeController) GetMypage(c *gin.Context) {
 		return
 	}
 
+	// string型変換
+	userIDStr, ok := userID.(string)
+	if !ok {
+		h.logger.Error("userID is not a string",
+			zap.String("requestID", requestID))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":      "userIDが正しい型ではありません",
+			"code":       "USER_ID_TYPE_ERROR",
+			"request_id": requestID,
+		})
+		return
+	}
+
 	// ユーザー情報取得ORM
-	user, err := h.blogUseCase.GetUserByID(userID.(string))
+	blog, err := h.blogUseCase.FindBlogsByUserID(userIDStr)
 	if err != nil {
 		h.logger.Error("Failed to get userID",
 			zap.String("requestID", requestID),
-			zap.String("userID", userID.(string)),
+			zap.String("userID", userIDStr),
 			zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":      "ユーザー情報の取得に失敗しました",
@@ -109,11 +136,16 @@ func (h *HomeController) GetMypage(c *gin.Context) {
 		return
 	}
 
+	// DTOに変換してレスポンス
+	response := mapper.ToBlogsResponse(blog)
+	h.logger.Info("Successfully changed blogs",
+		zap.String("requestID", requestID),
+		zap.Any("blogs", response))
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "ユーザー情報を取得しました",
 		"code":       "USER_FETCHED",
 		"request_id": requestID,
-		"user":       user,
+		"blogs":      response,
 	})
 	logrus.Info("@COMPLETE :GetMypage",
 		"requestID", requestID)

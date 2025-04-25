@@ -86,7 +86,7 @@ func NewContainer() *Container {
 	return &Container{
 		HomeController:    blogController.NewHomeController(blogUC, ss, logger),
 		LoginController:   authController.NewLoginController(authUC, ss, logger),
-		BlogController:    blogController.NewBlogController(blogUC, ss, logger),
+		BlogController:    blogController.NewBlogController(blogUC, userUC, ss, logger),
 		RegistController:  userController.NewRegistController(userUC, ss, logger),
 		SettingController: userController.NewSettingController(userUC, ss, logger),
 		LogoutController:  authController.NewLogoutController(authUC, ss, logger),

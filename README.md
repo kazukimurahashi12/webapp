@@ -4,7 +4,7 @@
  React v18.2.0 (Next.js v13.1.6 MUI v5 TypeScript v5.1.3)
 
  Redis v8.11.5
- MySQL v1.5.0
+ MySQL v8.0
  Docker v20.10.22
  
  【機能】

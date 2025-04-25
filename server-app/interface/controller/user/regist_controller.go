@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
 	"github.com/kazukimurahashi12/webapp/infrastructure/web/middleware"
+	"github.com/kazukimurahashi12/webapp/interface/dto"
+	"github.com/kazukimurahashi12/webapp/interface/mapper"
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	"github.com/kazukimurahashi12/webapp/usecase/user"
 	"github.com/kazukimurahashi12/webapp/usecase/validator"
@@ -33,14 +35,14 @@ func (r *RegistController) Regist(c *gin.Context) {
 	requestID := middleware.GetRequestID(ctx)
 
 	// JSON形式のリクエストボディを構造体にバインドする
-	registUser := domainUser.FormUser{}
-	if err := c.ShouldBindJSON(&registUser); err != nil {
+	dtoUser := dto.FormUser{}
+	if err := c.ShouldBindJSON(&dtoUser); err != nil {
 		// バリデーションチェックを実行
 		err := validator.ValidationCheck(c, err)
 		if err != nil {
 			r.logger.Error("Failed to bind JSON request",
 				zap.String("requestID", requestID),
-				zap.String("userId", registUser.UserID),
+				zap.String("userId", dtoUser.UserID),
 				zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error":      "リクエスト形式が不正です",
@@ -51,12 +53,23 @@ func (r *RegistController) Regist(c *gin.Context) {
 		}
 	}
 
+	// DTO、Entity変換
+	entityUser, err := domainUser.NewUser(dtoUser.UserID, dtoUser.Password)
+	if err != nil {
+		r.logger.Error("Domain validation failed in blog creation", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+			"code":  "INVALID_BLOG_ENTITY",
+		})
+		return
+	}
+
 	// 会員情報登録処理UseCase
-	createdUser, err := r.userUseCase.CreateUser(&registUser)
+	createdUser, err := r.userUseCase.CreateUser(entityUser.UserID, entityUser.Password)
 	if err != nil {
 		r.logger.Error("Failed to register user",
 			zap.String("requestID", requestID),
-			zap.String("userId", registUser.UserID),
+			zap.String("userId", entityUser.UserID),
 			zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":      "ユーザー登録に失敗しました",
@@ -66,13 +79,17 @@ func (r *RegistController) Regist(c *gin.Context) {
 		return
 	}
 
+	// DTOに変換してレスポンス
+	response := mapper.ToUserCreatedResponse(createdUser)
 	r.logger.Info("Successfully registered user",
 		zap.String("requestID", requestID),
-		zap.Any("user", createdUser))
+		zap.Any("user", response))
+
+	// ユーザー登録完了レスポンス
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "ユーザー登録が完了しました",
 		"code":       "USER_REGISTERED",
 		"request_id": requestID,
-		"user":       createdUser,
+		"user":       response,
 	})
 }

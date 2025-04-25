@@ -2,14 +2,17 @@ package blog
 
 import (
 	"time"
+
+	domaiUser "github.com/kazukimurahashi12/webapp/domain/user"
 )
 
 type Blog struct {
-	ID        uint       `json:"id" gorm:"primaryKey"`
-	LoginID   string     `json:"loginID" binding:"required,max=20"`
-	Title     string     `json:"title" binding:"required,min=1,max=50"`
-	Content   string     `json:"content" binding:"required,min=1,max=8000"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
-	DeletedAt *time.Time `json:"deletedAt" gorm:"index"`
+	ID        uint           `gorm:"primaryKey"`
+	UserID    uint           // 外部キー
+	User      domaiUser.User `gorm:"foreignKey:UserID"`
+	Title     string         `binding:"required,min=1,max=50"`
+	Content   string         `binding:"required,min=1,max=8000"`
+	CreatedAt time.Time      `json:"createdAt"`
+	UpdatedAt time.Time      `json:"updatedAt"`
+	DeletedAt *time.Time     `json:"deletedAt" gorm:"index"`
 }

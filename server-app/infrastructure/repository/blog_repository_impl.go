@@ -27,7 +27,7 @@ func (r *blogRepository) Create(blog *domainBlog.Blog) error {
 }
 
 // ブログを取得
-func (r *blogRepository) FindByID(id string) (*domainBlog.Blog, error) {
+func (r *blogRepository) FindBlogByID(id uint) (*domainBlog.Blog, error) {
 	blog := domainBlog.Blog{}
 	if err := r.db.Table("BLOGS").Where("id = ?", id).First(&blog).Error; err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (r *blogRepository) FindByID(id string) (*domainBlog.Blog, error) {
 }
 
 // ユーザーIDに紐づくブログを取得
-func (r *blogRepository) FindByUserID(userID string) ([]domainBlog.Blog, error) {
+func (r *blogRepository) FindBlogsByUserID(userID string) ([]domainBlog.Blog, error) {
 	var blogs []domainBlog.Blog
 	if err := r.db.Table("BLOGS").Where("user_id = ?", userID).Find(&blogs).Error; err != nil {
 		return nil, err

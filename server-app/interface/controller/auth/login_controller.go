@@ -4,7 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
+	"github.com/kazukimurahashi12/webapp/interface/dto"
+
 	"github.com/kazukimurahashi12/webapp/infrastructure/web/middleware"
 	"github.com/kazukimurahashi12/webapp/interface/mapper"
 	"github.com/kazukimurahashi12/webapp/interface/session"
@@ -71,12 +72,11 @@ func (l *LoginController) GetLogin(c *gin.Context) {
 
 	// DTOに変換してレスポンス
 	responseUserID := mapper.ToUserIDResponse(user)
-
 	l.logger.Info("Successfully fetched userinfo",
 		zap.String("requestID", requestID),
 		zap.Any("userID", responseUserID),
 	)
-
+	// ユーザ情報取得完了レスポンス
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "ユーザー情報を取得しました",
 		"code":       "USER_FETCHED",
@@ -88,7 +88,7 @@ func (l *LoginController) GetLogin(c *gin.Context) {
 // ログイン処理
 func (l *LoginController) PostLogin(c *gin.Context) {
 	// 初期化
-	var loginUser domainUser.FormUser
+	var loginUser dto.FormUser
 
 	// コンテクストからリクエストIDを取得
 	ctx := c.Request.Context()
@@ -139,7 +139,6 @@ func (l *LoginController) PostLogin(c *gin.Context) {
 
 	// DTOに変換してレスポンス
 	responseUserID := mapper.ToUserIDResponse(user)
-
 	// ログイン完了レスポンス
 	l.logger.Info("Successfully logined",
 		zap.String("requestID", requestID),

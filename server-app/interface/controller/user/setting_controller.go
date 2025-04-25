@@ -4,8 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
 	"github.com/kazukimurahashi12/webapp/infrastructure/web/middleware"
+	"github.com/kazukimurahashi12/webapp/interface/dto"
+	"github.com/kazukimurahashi12/webapp/interface/mapper"
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	usecaseUser "github.com/kazukimurahashi12/webapp/usecase/user"
 	"go.uber.org/zap"
@@ -25,13 +26,13 @@ func NewSettingController(userUseCase usecaseUser.UseCase, sessionManager sessio
 	}
 }
 
-// 会員情報編集(id)
+// 会員情報編集(UserID)
 func (s *SettingController) UpdateID(c *gin.Context) {
 	// コンテクストからリクエストIDを取得
 	ctx := c.Request.Context()
 	requestID := middleware.GetRequestID(ctx)
 
-	var userUpdate domainUser.UserIdChange
+	var userUpdate dto.UserIdChange
 	if err := c.ShouldBindJSON(&userUpdate); err != nil {
 		s.logger.Error("Failed to bind JSON",
 			zap.String("requestID", requestID),
@@ -94,14 +95,18 @@ func (s *SettingController) UpdateID(c *gin.Context) {
 		return
 	}
 
+	// DTOに変換してレスポンス
+	response := mapper.ToUserCreatedResponse(updatedUser)
 	s.logger.Info("Successfully changed user ID",
 		zap.String("requestID", requestID),
-		zap.String("newUserId", userUpdate.NewId))
+		zap.Any("user", response))
+
+	// ユーザ情報変更完了レスポンス
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "ユーザーIDを更新しました",
 		"code":       "USER_ID_UPDATED",
 		"request_id": requestID,
-		"user":       updatedUser,
+		"user":       response,
 	})
 }
 
@@ -111,7 +116,7 @@ func (s *SettingController) UpdatePassword(c *gin.Context) {
 	ctx := c.Request.Context()
 	requestID := middleware.GetRequestID(ctx)
 
-	var passwordUpdate domainUser.UserPwChange
+	var passwordUpdate dto.UserPwChange
 	if err := c.ShouldBindJSON(&passwordUpdate); err != nil {
 		s.logger.Error("Failed to bind JSON",
 			zap.String("requestID", requestID),
@@ -166,11 +171,17 @@ func (s *SettingController) UpdatePassword(c *gin.Context) {
 		})
 		return
 	}
+	// DTOに変換してレスポンス
+	response := mapper.ToUserCreatedResponse(updatedUser)
+	s.logger.Info("Successfully updated password",
+		zap.String("requestID", requestID),
+		zap.Any("user", response))
 
+	// ユーザ情報変更完了レスポンス
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "パスワードを更新しました",
 		"code":       "PASSWORD_UPDATED",
 		"request_id": requestID,
-		"user":       updatedUser,
+		"user":       response,
 	})
 }

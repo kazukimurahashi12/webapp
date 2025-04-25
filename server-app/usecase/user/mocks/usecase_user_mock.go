@@ -35,18 +35,18 @@ func (m *MockUseCase) EXPECT() *MockUseCaseMockRecorder {
 }
 
 // CreateUser mocks base method.
-func (m *MockUseCase) CreateUser(u *user.FormUser) (*user.User, error) {
+func (m *MockUseCase) CreateUser(userID, password string) (*user.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUser", u)
+	ret := m.ctrl.Call(m, "CreateUser", userID, password)
 	ret0, _ := ret[0].(*user.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateUser indicates an expected call of CreateUser.
-func (mr *MockUseCaseMockRecorder) CreateUser(user interface{}) *gomock.Call {
+func (mr *MockUseCaseMockRecorder) CreateUser(userID, password interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUseCase)(nil).CreateUser), user)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUseCase)(nil).CreateUser), userID, password)
 }
 
 // UpdateUserID mocks base method.

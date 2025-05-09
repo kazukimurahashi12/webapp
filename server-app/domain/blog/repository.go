@@ -4,7 +4,8 @@ package blog
 type BlogRepository interface {
 	Create(blog *Blog) error
 	FindBlogByID(id uint) (*Blog, error)
-	FindBlogsByUserID(userID string) ([]Blog, error)
+	FindBlogsByAuthorID(authorID uint) ([]Blog, error)
+	FindBlogByAuthorID(authorID uint) (*Blog, error)
 	Update(blog *Blog) error
-	Delete(id string) error
+	Delete(id uint) error
 }

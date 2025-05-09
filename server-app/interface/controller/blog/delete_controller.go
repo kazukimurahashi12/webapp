@@ -2,6 +2,7 @@ package blog
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kazukimurahashi12/webapp/infrastructure/web/middleware"
@@ -44,13 +45,26 @@ func (d *DeleteController) DeleteBlog(c *gin.Context) {
 	}
 
 	// ブログIDをリクエストから取得
-	id := c.Param("id")
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		d.logger.Error("Invalid blog ID format",
+			zap.String("requestID", requestID),
+			zap.String("id", idStr),
+			zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":      "ブログIDの形式が不正です",
+			"code":       "INVALID_BLOG_ID",
+			"request_id": requestID,
+		})
+		return
+	}
 	// ブログ記事削除処理UseCase
-	err := d.blogUseCase.DeleteBlog(id)
+	err = d.blogUseCase.DeleteBlog(uint(id))
 	if err != nil {
 		d.logger.Error("Failed to delete blog post",
 			zap.String("requestID", requestID),
-			zap.String("id", id),
+			zap.Uint64("id", id),
 			zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":      "ブログ記事の削除に失敗しました",
@@ -62,11 +76,11 @@ func (d *DeleteController) DeleteBlog(c *gin.Context) {
 
 	d.logger.Info("Successfully deleted blog post",
 		zap.String("requestID", requestID),
-		zap.String("id", id))
+		zap.Uint64("id", id))
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "ブログ記事を削除しました",
 		"code":       "BLOG_DELETED",
 		"request_id": requestID,
-		"blog_id":    id,
+		"blog_id":    strconv.FormatUint(id, 10),
 	})
 }

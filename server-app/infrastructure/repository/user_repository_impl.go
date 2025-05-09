@@ -31,9 +31,9 @@ func (r *userRepository) FindUserByID(id uint) (*domainUser.User, error) {
 }
 
 // ユーザーIDに紐づくユーザーを取得
-func (r *userRepository) FindUserByUserID(userID string) (*domainUser.User, error) {
+func (r *userRepository) FindUserByUserID(userID uint) (*domainUser.User, error) {
 	user := domainUser.User{}
-	if err := r.db.Table("USERS").Where("user_id = ?", userID).First(&user).Error; err != nil {
+	if err := r.db.Table("USERS").Where("id = ?", userID).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
@@ -48,7 +48,7 @@ func (r *userRepository) Create(user *domainUser.User) error {
 	}
 
 	newUser := domainUser.User{
-		UserID:   user.UserID,
+		Username: user.Username,
 		Password: encryptPw,
 	}
 
@@ -56,7 +56,7 @@ func (r *userRepository) Create(user *domainUser.User) error {
 }
 
 // ユーザーIDを変更
-func (r *userRepository) UpdateID(oldID, newID string) (*domainUser.User, error) {
+func (r *userRepository) UpdateID(oldID, newID uint) (*domainUser.User, error) {
 	// トランザクション開始
 	tx := r.db.Begin()
 	defer func() {
@@ -66,7 +66,7 @@ func (r *userRepository) UpdateID(oldID, newID string) (*domainUser.User, error)
 	}()
 
 	user := domainUser.User{}
-	if err := tx.Table("USERS").Where("user_id = ?", oldID).First(&user).Error; err != nil {
+	if err := tx.Table("USERS").Where("id = ?", oldID).First(&user).Error; err != nil {
 		tx.Rollback()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainUser.ErrUserNotFound
@@ -74,7 +74,7 @@ func (r *userRepository) UpdateID(oldID, newID string) (*domainUser.User, error)
 		return nil, err
 	}
 
-	user.UserID = newID
+	user.ID = newID
 	if err := tx.Table("USERS").Save(&user).Error; err != nil {
 		tx.Rollback()
 		return nil, err
@@ -88,7 +88,7 @@ func (r *userRepository) UpdateID(oldID, newID string) (*domainUser.User, error)
 }
 
 // ユーザーPWを変更
-func (r *userRepository) UpdatePassword(userID, newPassword string) (*domainUser.User, error) {
+func (r *userRepository) UpdatePassword(userID uint, newPassword string) (*domainUser.User, error) {
 	// トランザクション開始
 	tx := r.db.Begin()
 	defer func() {
@@ -98,7 +98,7 @@ func (r *userRepository) UpdatePassword(userID, newPassword string) (*domainUser
 	}()
 
 	user := domainUser.User{}
-	if err := tx.Table("USERS").Where("user_id = ?", userID).First(&user).Error; err != nil {
+	if err := tx.Table("USERS").Where("id = ?", userID).First(&user).Error; err != nil {
 		tx.Rollback()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainUser.ErrUserNotFound
@@ -137,7 +137,7 @@ func (r *userRepository) Update(user *domainUser.User) error {
 	}()
 
 	existingUser := domainUser.User{}
-	if err := tx.Table("USERS").Where("user_id = ?", user.ID).First(&existingUser).Error; err != nil {
+	if err := tx.Table("USERS").Where("id = ?", user.ID).First(&existingUser).Error; err != nil {
 		tx.Rollback()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return domainUser.ErrUserNotFound

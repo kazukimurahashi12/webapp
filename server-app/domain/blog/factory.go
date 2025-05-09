@@ -6,7 +6,7 @@ import (
 
 // DB保存用のBlog を生成するファクトリ関数
 // ID（uint）CreatedAt/UpdatedAt自動生成
-func NewBlog(userID uint, title, content string) (*Blog, error) {
+func NewBlog(authorID uint, title, content string) (*Blog, error) {
 	if title == "" || len(title) > 50 {
 		return nil, errors.New("タイトルの長さが不正です")
 	}
@@ -15,9 +15,9 @@ func NewBlog(userID uint, title, content string) (*Blog, error) {
 	}
 
 	return &Blog{
-		UserID:  userID,
-		Title:   title,
-		Content: content,
+		AuthorID: authorID,
+		Title:    title,
+		Content:  content,
 		// CreatedAt, UpdatedAt GORM自動で設定
 	}, nil
 }

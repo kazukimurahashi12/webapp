@@ -3,29 +3,28 @@ package blog
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kazukimurahashi12/webapp/domain/blog"
+	domainBlog "github.com/kazukimurahashi12/webapp/domain/blog"
 	"github.com/kazukimurahashi12/webapp/infrastructure/web/middleware"
 	"github.com/kazukimurahashi12/webapp/interface/dto"
 	"github.com/kazukimurahashi12/webapp/interface/mapper"
 	"github.com/kazukimurahashi12/webapp/interface/session"
 	usecaseBlog "github.com/kazukimurahashi12/webapp/usecase/blog"
-	usecaseUser "github.com/kazukimurahashi12/webapp/usecase/user"
+
 	"go.uber.org/zap"
 )
 
 type BlogController struct {
 	blogUseCase    usecaseBlog.UseCase
-	userUseCase    usecaseUser.UseCase
 	sessionManager session.SessionManager
 	logger         *zap.Logger
 }
 
-func NewBlogController(blogUseCase usecaseBlog.UseCase, userUseCase usecaseUser.UseCase, sessionManager session.SessionManager, logger *zap.Logger) *BlogController {
+func NewBlogController(blogUseCase usecaseBlog.UseCase, sessionManager session.SessionManager, logger *zap.Logger) *BlogController {
 	return &BlogController{
 		blogUseCase:    blogUseCase,
-		userUseCase:    userUseCase,
 		sessionManager: sessionManager,
 		logger:         logger,
 	}
@@ -71,24 +70,40 @@ func (b *BlogController) PostBlog(c *gin.Context) {
 		})
 		return
 	}
-	// ユーザー識別子からユーザーを検索して主キーを取得
-	user, err := b.userUseCase.FindUserByUserID(userIDStr)
+	// 文字列のuserIDをuintに変換
+	authorID, err := strconv.ParseUint(userIDStr, 10, 64)
 	if err != nil {
-		b.logger.Error("Failed to find user by userID",
+		b.logger.Error("Failed to parse userID",
 			zap.String("userID", userIDStr),
 			zap.Error(err),
 			zap.String("requestID", requestID),
 		)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":      "ユーザーIDの形式が不正です",
+			"code":       "INVALID_USER_ID_FORMAT",
+			"request_id": requestID,
+		})
+		return
+	}
+
+	// 著者IDからブログを取得
+	blog, err := b.blogUseCase.FindBlogByAuthorID(uint(authorID))
+	if err != nil {
+		b.logger.Error("Failed to find blog by authorID",
+			zap.Uint("authorID", uint(authorID)),
+			zap.Error(err),
+			zap.String("requestID", requestID),
+		)
 		c.JSON(http.StatusNotFound, gin.H{
-			"error":      "指定されたユーザーが存在しません",
-			"code":       "USER_NOT_FOUND",
+			"error":      "指定された著者のブログが存在しません",
+			"code":       "BLOG_NOT_FOUND",
 			"request_id": requestID,
 		})
 		return
 	}
 
 	// DTO、Entity変換
-	entityBlog, err := blog.NewBlog(user.ID, req.Title, req.Content)
+	entityBlog, err := domainBlog.NewBlog(blog.AuthorID, req.Title, req.Content)
 	if err != nil {
 		b.logger.Error("Domain validation failed in blog creation", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -181,7 +196,7 @@ func (b *BlogController) GetBlogView(c *gin.Context) {
 	}
 
 	// 閲覧権限チェック
-	if blog.User.UserID != userIDStr {
+	if blog.Author.Username != userIDStr {
 		b.logger.Warn("Unauthorized blog access attempt",
 			zap.String("requestID", requestID),
 			zap.Uint("blogID", id),
@@ -252,24 +267,24 @@ func (b *BlogController) EditBlog(c *gin.Context) {
 		return
 	}
 
-	// ユーザー識別子からユーザーを検索して主キーを取得
-	user, err := b.userUseCase.FindUserByUserID(userIDStr)
+	// 文字列のuserIDをuintに変換
+	authorID, err := strconv.ParseUint(userIDStr, 10, 64)
 	if err != nil {
-		b.logger.Error("Failed to find user by userID",
+		b.logger.Error("Failed to parse userID",
 			zap.String("userID", userIDStr),
 			zap.Error(err),
 			zap.String("requestID", requestID),
 		)
-		c.JSON(http.StatusNotFound, gin.H{
-			"error":      "指定されたユーザーが存在しません",
-			"code":       "USER_NOT_FOUND",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":      "ユーザーIDの形式が不正です",
+			"code":       "INVALID_USER_ID_FORMAT",
 			"request_id": requestID,
 		})
 		return
 	}
 
 	// DTO→Entity変換
-	entityBlog, err := blog.NewBlog(user.ID, req.Title, req.Content)
+	entityBlog, err := domainBlog.NewBlog(uint(authorID), req.Title, req.Content)
 	if err != nil {
 		b.logger.Error("Domain validation failed in blog edit",
 			zap.String("requestID", requestID),
@@ -327,14 +342,27 @@ func (b *BlogController) DeleteBlog(c *gin.Context) {
 		return
 	}
 
-	id := c.Param("id")
+	idStr := c.Param("id")
+	// uint型に変換
+	var id uint
+	if _, err := fmt.Sscanf(idStr, "%d", &id); err != nil {
+		b.logger.Error("Invalid blog ID format",
+			zap.String("requestID", requestID),
+			zap.String("id", idStr))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":      "ブログIDの形式が不正です",
+			"code":       "INVALID_BLOG_ID",
+			"request_id": requestID,
+		})
+		return
+	}
 
 	// UseCaseで削除（ユーザーIDによる所有者チェックなども想定）
 	err := b.blogUseCase.DeleteBlog(id)
 	if err != nil {
 		b.logger.Error("Failed to delete blog",
 			zap.String("requestID", requestID),
-			zap.String("id", id),
+			zap.String("id", fmt.Sprintf("%d", id)),
 			zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":      "ブログ記事の削除に失敗しました",
@@ -346,7 +374,7 @@ func (b *BlogController) DeleteBlog(c *gin.Context) {
 
 	b.logger.Info("Successfully deleted blog",
 		zap.String("requestID", requestID),
-		zap.String("id", id))
+		zap.String("id", fmt.Sprintf("%d", id)))
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "ブログ記事を削除しました",
 		"code":        "BLOG_DELETED",

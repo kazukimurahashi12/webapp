@@ -42,7 +42,7 @@ func (r *RegistController) Regist(c *gin.Context) {
 		if err != nil {
 			r.logger.Error("Failed to bind JSON request",
 				zap.String("requestID", requestID),
-				zap.String("userId", dtoUser.UserID),
+				zap.String("username", dtoUser.UserID),
 				zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error":      "リクエスト形式が不正です",
@@ -65,15 +65,15 @@ func (r *RegistController) Regist(c *gin.Context) {
 	}
 
 	// 会員情報登録処理UseCase
-	createdUser, err := r.userUseCase.CreateUser(entityUser.UserID, entityUser.Password)
+	createdUser, err := r.userUseCase.CreateUser(entityUser.Username, entityUser.Password)
 	if err != nil {
 		r.logger.Error("Failed to register user",
 			zap.String("requestID", requestID),
-			zap.String("userId", entityUser.UserID),
+			zap.String("username", entityUser.Username),
 			zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":      "ユーザー登録に失敗しました",
-			"code":       "USER_REGISTRATION_FAILED",
+			"code":       "USER_REGISTATION_FAILED",
 			"request_id": requestID,
 		})
 		return

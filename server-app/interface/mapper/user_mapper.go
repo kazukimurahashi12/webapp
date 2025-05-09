@@ -8,13 +8,13 @@ import (
 func ToUserCreatedResponse(u *user.User) *dto.UserCreatedResponse {
 	return &dto.UserCreatedResponse{
 		ID:        u.ID,
-		UserID:    u.UserID,
+		UserID:    u.Username,
 		CreatedAt: u.CreatedAt,
 	}
 }
 
 func ToUserIDResponse(u *user.User) *dto.UserIDResponse {
 	return &dto.UserIDResponse{
-		UserID: u.UserID,
+		UserID: u.Username,
 	}
 }

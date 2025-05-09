@@ -37,7 +37,7 @@ func TestLogoutController_DecideLogout(t *testing.T) {
 		// 認証モック
 		mockAuthUseCase.EXPECT().
 			Authenticate("testuser", "password123").
-			Return(&user.User{UserID: "user123"}, nil)
+			Return(&user.User{Username: "user123"}, nil)
 
 		// セッション削除モック
 		mockSession.EXPECT().
@@ -110,7 +110,7 @@ func TestLogoutController_DecideLogout(t *testing.T) {
 		// 認証モック
 		mockAuthUseCase.EXPECT().
 			Authenticate("testuser", "password123").
-			Return(&user.User{UserID: "user123"}, nil)
+			Return(&user.User{Username: "user123"}, nil)
 
 		// セッション削除失敗モック
 		mockSession.EXPECT().

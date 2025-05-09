@@ -35,18 +35,18 @@ func (m *MockUseCase) EXPECT() *MockUseCaseMockRecorder {
 }
 
 // CreateUser mocks base method.
-func (m *MockUseCase) CreateUser(userID, password string) (*user.User, error) {
+func (m *MockUseCase) CreateUser(username, password string) (*user.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUser", userID, password)
+	ret := m.ctrl.Call(m, "CreateUser", username, password)
 	ret0, _ := ret[0].(*user.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateUser indicates an expected call of CreateUser.
-func (mr *MockUseCaseMockRecorder) CreateUser(userID, password interface{}) *gomock.Call {
+func (mr *MockUseCaseMockRecorder) CreateUser(username, password interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUseCase)(nil).CreateUser), userID, password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUseCase)(nil).CreateUser), username, password)
 }
 
 // FindUserByID mocks base method.
@@ -65,7 +65,7 @@ func (mr *MockUseCaseMockRecorder) FindUserByID(id interface{}) *gomock.Call {
 }
 
 // FindUserByUserID mocks base method.
-func (m *MockUseCase) FindUserByUserID(userID string) (*user.User, error) {
+func (m *MockUseCase) FindUserByUserID(userID uint) (*user.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindUserByUserID", userID)
 	ret0, _ := ret[0].(*user.User)
@@ -80,7 +80,7 @@ func (mr *MockUseCaseMockRecorder) FindUserByUserID(userID interface{}) *gomock.
 }
 
 // UpdateUserID mocks base method.
-func (m *MockUseCase) UpdateUserID(oldID, newID string) (*user.User, error) {
+func (m *MockUseCase) UpdateUserID(oldID, newID uint) (*user.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUserID", oldID, newID)
 	ret0, _ := ret[0].(*user.User)
@@ -95,7 +95,7 @@ func (mr *MockUseCaseMockRecorder) UpdateUserID(oldID, newID interface{}) *gomoc
 }
 
 // UpdateUserPassword mocks base method.
-func (m *MockUseCase) UpdateUserPassword(userID, currentPassword, newPassword string) (*user.User, error) {
+func (m *MockUseCase) UpdateUserPassword(userID uint, currentPassword, newPassword string) (*user.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUserPassword", userID, currentPassword, newPassword)
 	ret0, _ := ret[0].(*user.User)

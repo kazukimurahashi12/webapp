@@ -6,8 +6,9 @@ import (
 
 type UseCase interface {
 	NewCreateBlog(blog *domainBlog.Blog) (*domainBlog.Blog, error)
-	FindBlogsByUserID(userID string) ([]domainBlog.Blog, error)
+	FindBlogsByAuthorID(authorID uint) ([]domainBlog.Blog, error)
 	FindBlogByID(id uint) (*domainBlog.Blog, error)
-	DeleteBlog(id string) error
+	FindBlogByAuthorID(authorID uint) (*domainBlog.Blog, error)
+	DeleteBlog(id uint) error
 	UpdateBlog(blog *domainBlog.Blog) (*domainBlog.Blog, error)
 }

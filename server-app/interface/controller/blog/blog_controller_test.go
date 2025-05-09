@@ -15,7 +15,6 @@ import (
 	domainUser "github.com/kazukimurahashi12/webapp/domain/user"
 	sessionMocks "github.com/kazukimurahashi12/webapp/interface/session/mocks"
 	blogMocks "github.com/kazukimurahashi12/webapp/usecase/blog/mocks"
-	userMocks "github.com/kazukimurahashi12/webapp/usecase/user/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zaptest"
 )
@@ -28,39 +27,31 @@ func TestBlogController_PostBlog(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(recorder)
-		reqBody := `{"id":"test id","userID":"user123","title":"test title","content":"test content"}`
+		reqBody := `{"title":"test title","content":"test content"}`
 		req := httptest.NewRequest(http.MethodPost, "/blog", strings.NewReader(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		ctx.Request = req
-		ctx.Set("userID", "user123")
+		ctx.Set("userID", "123")
 
 		mockSession := sessionMocks.NewMockSessionManager(ctrl)
 		mockBlogUseCase := blogMocks.NewMockUseCase(ctrl)
-		mockUserUseCase := userMocks.NewMockUseCase(ctrl)
 
 		// モック設定
 		expectedBlog, _ := blog.NewBlog(123, "test title", "test content")
 		mockBlogUseCase.EXPECT().
+			FindBlogByAuthorID(uint(123)).
+			Return(expectedBlog, nil)
+
+		mockBlogUseCase.EXPECT().
 			NewCreateBlog(gomock.Any()).
 			Return(expectedBlog, nil)
 
-		mockUser := &domainUser.User{
-			ID:     123,
-			UserID: "user123",
-		}
-		mockUserUseCase.EXPECT().
-			FindUserByUserID("user123").
-			Return(mockUser, nil).Times(1)
-
 		logger := zaptest.NewLogger(t)
-		controller := NewBlogController(mockBlogUseCase, mockUserUseCase, mockSession, logger)
+		controller := NewBlogController(mockBlogUseCase, mockSession, logger)
 
-		// 実行
 		controller.PostBlog(ctx)
 
-		// 検証
-		assert.Equal(t, http.StatusOK, ctx.Writer.Status())
-
+		assert.Equal(t, http.StatusOK, recorder.Code)
 		var response map[string]interface{}
 		err := json.Unmarshal(recorder.Body.Bytes(), &response)
 		if assert.NoError(t, err) {
@@ -80,10 +71,9 @@ func TestBlogController_PostBlog(t *testing.T) {
 
 		mockSession := sessionMocks.NewMockSessionManager(ctrl)
 		mockBlogUseCase := blogMocks.NewMockUseCase(ctrl)
-		mockUserUseCase := userMocks.NewMockUseCase(ctrl)
 
 		logger := zaptest.NewLogger(t)
-		controller := NewBlogController(mockBlogUseCase, mockUserUseCase, mockSession, logger)
+		controller := NewBlogController(mockBlogUseCase, mockSession, logger)
 
 		// 実行
 		controller.PostBlog(ctx)
@@ -110,9 +100,8 @@ func TestBlogController_GetBlogView(t *testing.T) {
 
 	mockSession := sessionMocks.NewMockSessionManager(ctrl)
 	mockBlogUseCase := blogMocks.NewMockUseCase(ctrl)
-	mockUserUseCase := userMocks.NewMockUseCase(ctrl)
 	logger := zaptest.NewLogger(t)
-	controller := NewBlogController(mockBlogUseCase, mockUserUseCase, mockSession, logger)
+	controller := NewBlogController(mockBlogUseCase, mockSession, logger)
 
 	t.Run("Success", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
@@ -134,8 +123,8 @@ func TestBlogController_GetBlogView(t *testing.T) {
 		c.Params = gin.Params{gin.Param{Key: "id", Value: "123"}}
 
 		expectedBlog := &blog.Blog{
-			ID:     123,
-			UserID: uint(123),
+			ID:       123,
+			AuthorID: uint(123),
 		}
 
 		mockBlogUseCase.EXPECT().
@@ -201,8 +190,8 @@ func TestBlogController_GetBlogView(t *testing.T) {
 		ctx.Params = gin.Params{gin.Param{Key: "id", Value: "123"}}
 
 		expectedBlog := &blog.Blog{
-			ID:     123,
-			UserID: uint(123),
+			ID:       123,
+			AuthorID: uint(123),
 		}
 
 		mockBlogUseCase.EXPECT().
@@ -230,15 +219,14 @@ func TestBlogController_EditBlog(t *testing.T) {
 
 		mockSession := sessionMocks.NewMockSessionManager(ctrl)
 		mockBlogUseCase := blogMocks.NewMockUseCase(ctrl)
-		mockUserUseCase := userMocks.NewMockUseCase(ctrl)
 
 		// モック設定
 		mockUser := &domainUser.User{
-			ID:     123,
-			UserID: "user123",
+			ID:       123,
+			Username: "user123",
 		}
-		mockUserUseCase.EXPECT().
-			FindUserByUserID("user123").
+		mockBlogUseCase.EXPECT().
+			FindBlogByAuthorID("user123").
 			Return(mockUser, nil).Times(1)
 		expectedBlog, _ := blog.NewBlog(123, "updated title", "updated content")
 		mockBlogUseCase.EXPECT().
@@ -246,7 +234,7 @@ func TestBlogController_EditBlog(t *testing.T) {
 			Return(expectedBlog, nil)
 
 		logger := zaptest.NewLogger(t)
-		controller := NewBlogController(mockBlogUseCase, mockUserUseCase, mockSession, logger)
+		controller := NewBlogController(mockBlogUseCase, mockSession, logger)
 
 		// 実行
 		controller.EditBlog(ctx)
@@ -271,21 +259,17 @@ func TestBlogController_DeleteBlog(t *testing.T) {
 
 		mockSession := sessionMocks.NewMockSessionManager(ctrl)
 		mockBlogUseCase := blogMocks.NewMockUseCase(ctrl)
-		mockUserUseCase := userMocks.NewMockUseCase(ctrl)
 
-		// モック設定
 		mockBlogUseCase.EXPECT().
-			DeleteBlog("123").
+			DeleteBlog(uint(123)).
 			Return(nil)
 
 		logger := zaptest.NewLogger(t)
-		controller := NewBlogController(mockBlogUseCase, mockUserUseCase, mockSession, logger)
+		controller := NewBlogController(mockBlogUseCase, mockSession, logger)
 
-		// 実行
 		controller.DeleteBlog(ctx)
 
-		// 検証
-		assert.Equal(t, http.StatusOK, ctx.Writer.Status())
+		assert.Equal(t, http.StatusOK, recorder.Code)
 	})
 
 	t.Run("DeleteFailed", func(t *testing.T) {
@@ -298,15 +282,14 @@ func TestBlogController_DeleteBlog(t *testing.T) {
 
 		mockSession := sessionMocks.NewMockSessionManager(ctrl)
 		mockBlogUseCase := blogMocks.NewMockUseCase(ctrl)
-		mockUserUseCase := userMocks.NewMockUseCase(ctrl)
 
 		// モック設定
 		mockBlogUseCase.EXPECT().
-			DeleteBlog("123").
+			DeleteBlog(uint(123)).
 			Return(errors.New("delete failed"))
 
 		logger := zaptest.NewLogger(t)
-		controller := NewBlogController(mockBlogUseCase, mockUserUseCase, mockSession, logger)
+		controller := NewBlogController(mockBlogUseCase, mockSession, logger)
 
 		// 実行
 		controller.DeleteBlog(ctx)

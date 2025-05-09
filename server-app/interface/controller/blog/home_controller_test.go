@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/kazukimurahashi12/webapp/domain/blog"
-	"github.com/kazukimurahashi12/webapp/domain/user"
 	sessionMocks "github.com/kazukimurahashi12/webapp/interface/session/mocks"
 	blogMocks "github.com/kazukimurahashi12/webapp/usecase/blog/mocks"
 	"github.com/stretchr/testify/assert"
@@ -38,7 +37,7 @@ func TestHomeController_GetTop(t *testing.T) {
 			{ID: 2, Title: "Test Blog 2"},
 		}
 		mockBlogUseCase.EXPECT().
-			FindBlogsByUserID("user123").
+			FindBlogsByAuthorID(uint(123)).
 			Return(expectedBlogs, nil)
 
 		logger := zaptest.NewLogger(t)
@@ -71,7 +70,7 @@ func TestHomeController_GetTop(t *testing.T) {
 
 		// モック設定
 		mockBlogUseCase.EXPECT().
-			FindBlogsByUserID("user123").
+			FindBlogsByAuthorID(uint(123)).
 			Return(nil, errors.New("fetch failed"))
 
 		logger := zaptest.NewLogger(t)
@@ -121,10 +120,13 @@ func TestHomeController_GetMypage(t *testing.T) {
 		mockBlogUseCase := blogMocks.NewMockUseCase(ctrl)
 
 		// モック設定
-		expectedUser := &user.User{UserID: "user123"}
+		expectedBlogs := []blog.Blog{
+			{ID: 1, Title: "Test Blog 1"},
+			{ID: 2, Title: "Test Blog 2"},
+		}
 		mockBlogUseCase.EXPECT().
-			FindBlogsByUserID("user123").
-			Return(expectedUser, nil)
+			FindBlogsByAuthorID(uint(123)).
+			Return(expectedBlogs, nil)
 
 		logger := zaptest.NewLogger(t)
 		controller := NewHomeController(mockBlogUseCase, mockSession, logger)
@@ -138,8 +140,9 @@ func TestHomeController_GetMypage(t *testing.T) {
 		var response map[string]interface{}
 		err := json.Unmarshal(recorder.Body.Bytes(), &response)
 		if assert.NoError(t, err) {
-			assert.Equal(t, "ユーザー情報を取得しました", response["message"])
-			assert.Equal(t, "USER_FETCHED", response["code"])
+			assert.Equal(t, "ブログ記事を取得しました", response["message"])
+			assert.Equal(t, "BLOG_FETCHED", response["code"])
+			assert.Len(t, response["blogs"], 2)
 		}
 	})
 
@@ -155,7 +158,7 @@ func TestHomeController_GetMypage(t *testing.T) {
 
 		// モック設定
 		mockBlogUseCase.EXPECT().
-			FindBlogsByUserID("user123").
+			FindBlogsByAuthorID(uint(123)).
 			Return(nil, errors.New("fetch failed"))
 
 		logger := zaptest.NewLogger(t)

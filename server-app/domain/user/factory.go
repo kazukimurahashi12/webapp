@@ -6,9 +6,9 @@ import (
 )
 
 // FormUserからUserに変換するファクトリ関数
-func NewUser(userID, password string) (*User, error) {
-	if len(userID) < 2 || len(userID) > 10 {
-		return nil, errors.New("ユーザーIDの長さが不正です")
+func NewUser(username, password string) (*User, error) {
+	if len(username) < 2 || len(username) > 10 {
+		return nil, errors.New("ユーザー名の長さが不正です")
 	}
 	if len(password) < 4 || len(password) > 20 {
 		return nil, errors.New("パスワードの長さが不正です")
@@ -17,7 +17,7 @@ func NewUser(userID, password string) (*User, error) {
 	now := time.Now()
 
 	return &User{
-		UserID:    userID,
+		Username:  username,
 		Password:  password,
 		CreatedAt: now,
 		UpdatedAt: now,

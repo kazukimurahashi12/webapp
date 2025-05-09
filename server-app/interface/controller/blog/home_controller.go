@@ -2,6 +2,7 @@ package blog
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kazukimurahashi12/webapp/infrastructure/web/middleware"
@@ -58,8 +59,23 @@ func (h *HomeController) GetTop(c *gin.Context) {
 		return
 	}
 
+	// userIDをuintに変換
+	userIDUint, err := strconv.ParseUint(userIDStr, 10, 64)
+	if err != nil {
+		h.logger.Error("Invalid user ID format",
+			zap.String("requestID", requestID),
+			zap.String("userID", userIDStr),
+			zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":      "ユーザーIDの形式が不正です",
+			"code":       "INVALID_USER_ID",
+			"request_id": requestID,
+		})
+		return
+	}
+
 	// ブログ記事取得ORM
-	blogs, err := h.blogUseCase.FindBlogsByUserID(userIDStr)
+	blogs, err := h.blogUseCase.FindBlogsByAuthorID(uint(userIDUint))
 	if err != nil {
 		h.logger.Error("Failed to get blogs",
 			zap.String("requestID", requestID),
@@ -121,8 +137,23 @@ func (h *HomeController) GetMypage(c *gin.Context) {
 		return
 	}
 
+	// userIDをuintに変換
+	userIDUint, err := strconv.ParseUint(userIDStr, 10, 64)
+	if err != nil {
+		h.logger.Error("Invalid user ID format",
+			zap.String("requestID", requestID),
+			zap.String("userID", userIDStr),
+			zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":      "ユーザーIDの形式が不正です",
+			"code":       "INVALID_USER_ID",
+			"request_id": requestID,
+		})
+		return
+	}
+
 	// ユーザー情報取得ORM
-	blog, err := h.blogUseCase.FindBlogsByUserID(userIDStr)
+	blog, err := h.blogUseCase.FindBlogsByAuthorID(uint(userIDUint))
 	if err != nil {
 		h.logger.Error("Failed to get userID",
 			zap.String("requestID", requestID),

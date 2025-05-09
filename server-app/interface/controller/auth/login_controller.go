@@ -124,10 +124,10 @@ func (l *LoginController) PostLogin(c *gin.Context) {
 	}
 
 	// セッション作成
-	if err := l.sessionManager.CreateSession(user.UserID); err != nil {
+	if err := l.sessionManager.CreateSession(user.Username); err != nil {
 		l.logger.Error("Failed to create session",
 			zap.String("requestID", requestID),
-			zap.String("userID", user.UserID),
+			zap.String("userID", user.Username),
 			zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":      "セッションの作成に失敗しました",

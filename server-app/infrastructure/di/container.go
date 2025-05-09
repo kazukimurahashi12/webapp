@@ -78,7 +78,7 @@ func NewContainer() *Container {
 	userRepo := repository.NewUserRepository(dbManager)
 
 	// UseCase初期化
-	blogUC := blogUseCase.NewBlogUseCase(blogRepo, userRepo)
+	blogUC := blogUseCase.NewBlogUseCase(blogRepo)
 	authUC := authUseCase.NewAuthUseCase(userRepo)
 	userUC := userUseCase.NewUserUseCase(userRepo)
 
@@ -86,7 +86,7 @@ func NewContainer() *Container {
 	return &Container{
 		HomeController:    blogController.NewHomeController(blogUC, ss, logger),
 		LoginController:   authController.NewLoginController(authUC, ss, logger),
-		BlogController:    blogController.NewBlogController(blogUC, userUC, ss, logger),
+		BlogController:    blogController.NewBlogController(blogUC, ss, logger),
 		RegistController:  userController.NewRegistController(userUC, ss, logger),
 		SettingController: userController.NewSettingController(userUC, ss, logger),
 		LogoutController:  authController.NewLogoutController(authUC, ss, logger),

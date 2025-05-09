@@ -15,7 +15,7 @@ func NewUserUseCase(userRepo domainUser.UserRepository) UseCase {
 	}
 }
 
-func (u *userUseCase) FindUserByUserID(userID string) (*domainUser.User, error) {
+func (u *userUseCase) FindUserByUserID(userID uint) (*domainUser.User, error) {
 	return u.userRepo.FindUserByUserID(userID)
 }
 
@@ -23,11 +23,11 @@ func (u *userUseCase) FindUserByID(id uint) (*domainUser.User, error) {
 	return u.userRepo.FindUserByID(id)
 }
 
-func (u *userUseCase) UpdateUserID(oldID, newID string) (*domainUser.User, error) {
+func (u *userUseCase) UpdateUserID(oldID, newID uint) (*domainUser.User, error) {
 	return u.userRepo.UpdateID(oldID, newID)
 }
 
-func (u *userUseCase) UpdateUserPassword(userID, currentPassword, newPassword string) (*domainUser.User, error) {
+func (u *userUseCase) UpdateUserPassword(userID uint, currentPassword, newPassword string) (*domainUser.User, error) {
 	// 現在のパスワードを検証
 	user, err := u.userRepo.FindUserByUserID(userID)
 	if err != nil {
@@ -42,7 +42,7 @@ func (u *userUseCase) UpdateUserPassword(userID, currentPassword, newPassword st
 	return u.userRepo.UpdatePassword(userID, newPassword)
 }
 
-func (u *userUseCase) CreateUser(userID, password string) (*domainUser.User, error) {
+func (u *userUseCase) CreateUser(username, password string) (*domainUser.User, error) {
 	// パスワードをハッシュ化
 	crypto := crypto.NewBcryptCrypto()
 	hashedPassword, err := crypto.Encrypt(password)
@@ -52,7 +52,7 @@ func (u *userUseCase) CreateUser(userID, password string) (*domainUser.User, err
 
 	// 新しいユーザーを作成
 	newUser := &domainUser.User{
-		UserID:   userID,
+		Username: username,
 		Password: hashedPassword,
 	}
 

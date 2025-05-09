@@ -2,6 +2,7 @@ package user
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kazukimurahashi12/webapp/infrastructure/web/middleware"
@@ -68,8 +69,35 @@ func (s *SettingController) UpdateID(c *gin.Context) {
 		return
 	}
 
+	// 文字列のIDをuintに変換
+	oldID, err := strconv.ParseUint(userIDStr, 10, 64)
+	if err != nil {
+		s.logger.Error("Failed to parse userID",
+			zap.String("requestID", requestID),
+			zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":      "ユーザーIDの形式が不正です",
+			"code":       "INVALID_USER_ID_FORMAT",
+			"request_id": requestID,
+		})
+		return
+	}
+
+	newID, err := strconv.ParseUint(userUpdate.NewId, 10, 64)
+	if err != nil {
+		s.logger.Error("Failed to parse new userID",
+			zap.String("requestID", requestID),
+			zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":      "新しいユーザーIDの形式が不正です",
+			"code":       "INVALID_NEW_USER_ID_FORMAT",
+			"request_id": requestID,
+		})
+		return
+	}
+
 	// UpdateUserID処理UseCase
-	updatedUser, err := s.userUseCase.UpdateUserID(userIDStr, userUpdate.NewId)
+	updatedUser, err := s.userUseCase.UpdateUserID(uint(oldID), uint(newID))
 	if err != nil {
 		s.logger.Error("Failed to update user ID",
 			zap.String("requestID", requestID),
@@ -83,7 +111,7 @@ func (s *SettingController) UpdateID(c *gin.Context) {
 	}
 
 	//redisでセッション破棄、新IDでセッション作成
-	if err := s.sessionManager.UpdateSession(c, userUpdate.NewId); err != nil {
+	if err := s.sessionManager.UpdateSession(c, strconv.FormatUint(uint64(updatedUser.ID), 10)); err != nil {
 		s.logger.Error("Failed to update session",
 			zap.String("requestID", requestID),
 			zap.Error(err))
@@ -141,9 +169,35 @@ func (s *SettingController) UpdatePassword(c *gin.Context) {
 		return
 	}
 
+	// 文字列のuserIDをuintに変換
+	userIDStr, ok := userID.(string)
+	if !ok {
+		s.logger.Error("userID is not a string",
+			zap.String("requestID", requestID))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":      "userIDが正しい型ではありません",
+			"code":       "USER_ID_TYPE_ERROR",
+			"request_id": requestID,
+		})
+		return
+	}
+
+	userIDUint, err := strconv.ParseUint(userIDStr, 10, 64)
+	if err != nil {
+		s.logger.Error("Failed to parse userID",
+			zap.String("requestID", requestID),
+			zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":      "ユーザーIDの形式が不正です",
+			"code":       "INVALID_USER_ID_FORMAT",
+			"request_id": requestID,
+		})
+		return
+	}
+
 	// UpdateUserPassword処理UseCase
 	updatedUser, err := s.userUseCase.UpdateUserPassword(
-		userID.(string),
+		uint(userIDUint),
 		passwordUpdate.NowPassword,
 		passwordUpdate.ChangePassword,
 	)
@@ -160,7 +214,7 @@ func (s *SettingController) UpdatePassword(c *gin.Context) {
 	}
 
 	//redisでセッション破棄、再度セッション作成
-	if err := s.sessionManager.UpdateSession(c, updatedUser.UserID); err != nil {
+	if err := s.sessionManager.UpdateSession(c, strconv.FormatUint(uint64(updatedUser.ID), 10)); err != nil {
 		s.logger.Error("Failed to update session",
 			zap.String("requestID", requestID),
 			zap.Error(err))

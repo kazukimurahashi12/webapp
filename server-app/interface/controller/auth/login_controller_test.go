@@ -39,7 +39,7 @@ func TestLoginController_GetLogin(t *testing.T) {
 		// ユーザーモック
 		mockAuthUseCase.EXPECT().
 			GetUserByID("user123").
-			Return(&user.User{UserID: "user123"}, nil)
+			Return(&user.User{Username: "user123"}, nil)
 
 		logger := zaptest.NewLogger(t)
 		controller := NewLoginController(mockAuthUseCase, mockSession, logger)
@@ -122,7 +122,7 @@ func TestLoginController_PostLogin(t *testing.T) {
 		// 認証モック
 		mockAuthUseCase.EXPECT().
 			Authenticate("testuser", "password123").
-			Return(&user.User{UserID: "user123"}, nil)
+			Return(&user.User{Username: "user123"}, nil)
 
 		// セッション作成モック
 		mockSession.EXPECT().
@@ -189,7 +189,7 @@ func TestLoginController_PostLogin(t *testing.T) {
 
 		mockAuthUseCase.EXPECT().
 			Authenticate("testuser", "password123").
-			Return(&user.User{UserID: "user123"}, nil)
+			Return(&user.User{Username: "user123"}, nil)
 
 		mockSession.EXPECT().
 			CreateSession("user123").

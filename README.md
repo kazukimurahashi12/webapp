@@ -6,6 +6,7 @@
  Redis v8.11.5
  MySQL v8.0
  Docker v20.10.22
+ Azure Piplines
  
  【機能】
  ブログ記事閲覧画面（メイン）
@@ -16,8 +17,8 @@
 
  【画面】
 
- ・ブログ記事閲覧画面（メイン）
-<img width="1437" alt="mainblog" src="https://github.com/kazukimurahashi12/webapp/assets/73862261/c17fe1bb-4f17-4291-a02e-fa771e592d70">
+・ブログ記事閲覧画面（メイン）
+<img width="1437" alt="268143995-c17fe1bb-4f17-4291-a02e-fa771e592d70" src="https://github.com/user-attachments/assets/b335b7c5-d1f9-4173-9392-c192aa0eabc2" />
 
 ・ログイン画面
 <img width="1439" alt="ログイン" src="https://github.com/kazukimurahashi12/webapp/assets/73862261/d6f7680b-2731-433b-a6e6-a67a54d5458a">
@@ -48,3 +49,4 @@
 
 「TODO」
 JWT
+

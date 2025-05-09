@@ -16,33 +16,33 @@
  
 
  【画面】
-
 ・ブログ記事閲覧画面（メイン）
-<img width="1437" alt="268143995-c17fe1bb-4f17-4291-a02e-fa771e592d70" src="https://github.com/user-attachments/assets/b335b7c5-d1f9-4173-9392-c192aa0eabc2" />
+<img width="1437" alt="ブログメイン" src="https://github.com/user-attachments/assets/56d91e82-70b0-44aa-aa71-2e679f0eb206" />
 
 ・ログイン画面
-<img width="1439" alt="ログイン" src="https://github.com/kazukimurahashi12/webapp/assets/73862261/d6f7680b-2731-433b-a6e6-a67a54d5458a">
+<img width="1439" alt="ログイン" src="https://github.com/user-attachments/assets/65008924-9c85-44b6-8af8-a2dfa0a21b02" />
 
 ・ブログ記事一覧画面
-<img width="1440" alt="blogoverview" src="https://github.com/kazukimurahashi12/webapp/assets/73862261/11d4a9fa-259a-40f9-99cb-c634212e4ff1">
+<img width="1440" alt="ブログ一覧" src="https://github.com/user-attachments/assets/4423f27d-9cf0-45b2-8496-4a51eff3c911" />
 
 ・個別ブログ閲覧画面（編集確認モード）
-<img width="1438" alt="Go" src="https://github.com/kazukimurahashi12/webapp/assets/73862261/b6577276-d539-4967-b217-029659d9d74d">
+<img width="1438" alt="個別ブログ閲覧" src="https://github.com/user-attachments/assets/65992193-9bba-4c72-8661-da7284b495b2" />
 
 ・記事新規作成画面
-<img width="1440" alt="作成" src="https://github.com/kazukimurahashi12/webapp/assets/73862261/1fd64e27-d19d-4ab7-8212-1cd16a4aee29">
+<img width="1440" alt="記事作成画面" src="https://github.com/user-attachments/assets/2dcc53d7-ec29-4e24-93b0-72b3a10c4b5a" />
 
 ・記事編集画面
-<img width="1440" alt="編集" src="https://github.com/kazukimurahashi12/webapp/assets/73862261/4047657a-01a4-424b-ad59-c4d33a55013b">
+<img width="1440" alt="記事編集" src="https://github.com/user-attachments/assets/12a4fece-ee31-44f8-9694-e5e284ecc53c" />
 
 ・記事消去ダイアログ
-<img width="1440" alt="消去ダイアログ" src="https://github.com/kazukimurahashi12/webapp/assets/73862261/c4bbbbb2-402f-4492-b0e9-6fecb5f0fc8a">
+<img width="1440" alt="ブログ記事消去確認" src="https://github.com/user-attachments/assets/2b3b5a82-0620-431f-a04e-2fe6ccdd4e25" />
 
 ・会員情報登録画面
-<img width="1440" alt="登録" src="https://github.com/kazukimurahashi12/webapp/assets/73862261/cb8582b0-ec02-42c9-9dfb-ae486305e17d">
+<img width="1440" alt="会員登録" src="https://github.com/user-attachments/assets/667a13eb-ef8f-4d3f-80c2-b5d71400854e" />
 
 ・会員情報変更画面
-<img width="1440" alt="ID編集" src="https://github.com/kazukimurahashi12/webapp/assets/73862261/b3d3ba41-3dac-446e-a764-4fdb9f477686">
+<img width="1440" alt="アカウント編集" src="https://github.com/user-attachments/assets/8e5a2163-67a4-47f3-9ede-a8efabb811b2" />
+
 
 ・ログアウト画面
 <img width="1439" alt="ログアウト" src="https://github.com/kazukimurahashi12/webapp/assets/73862261/b82d8cb8-b009-4d98-ad16-ae4f6a6d53d4">

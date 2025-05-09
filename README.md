@@ -43,10 +43,10 @@
 ・会員情報変更画面
 <img width="1440" alt="アカウント編集" src="https://github.com/user-attachments/assets/8e5a2163-67a4-47f3-9ede-a8efabb811b2" />
 
-
 ・ログアウト画面
-<img width="1439" alt="ログアウト" src="https://github.com/kazukimurahashi12/webapp/assets/73862261/b82d8cb8-b009-4d98-ad16-ae4f6a6d53d4">
+<img width="1439" alt="ログアウト" src="https://github.com/user-attachments/assets/24c24038-7e10-49d1-b245-e123f28fb578" />
+
 
 「TODO」
-JWT
+JWT Token
 
